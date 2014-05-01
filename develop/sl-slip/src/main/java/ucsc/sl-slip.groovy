@@ -14,9 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.umd.cs.example;
+package src.main.ucsc;
 
-import edu.umd.cs.psl.application.inference.LazyMPEInference;
+//import edu.umd.cs.psl.application.inference.LazyMPEInference;
 //import edu.umd.cs.psl.application.learning.weight.maxlikelihood.LazyMaxLikelihoodMPE;
 import edu.umd.cs.psl.config.*
 import edu.umd.cs.psl.database.DataStore
@@ -138,7 +138,7 @@ Partition writePart = new Partition(1);
 //Partition trainPart = new Partition(0);
 Partition truthPart = new Partition(1);
 
-def dir = 'data'+java.io.File.separator+'test'+java.io.File.separator;
+def dir = '../../data/test/';
 def trainDir = dir+'train'+java.io.File.separator;
 
 // Load static data
@@ -190,7 +190,6 @@ dbPop.populateFromDB(trainDB, goCC);
 // now run EM on trainDB: model, random variable DB, training DB and config bundle
 HardEM weightLearning = new HardEM(m, trainDB, observedDB, config);
 
-
 // this might be the right way, but one equivalent would be to create a separate RV with only 
 // inferred SL links
 println "\t\tLEARNING WEIGHTS DONE";
@@ -198,6 +197,7 @@ println "\t\tLEARNING WEIGHTS DONE";
 println m
 
 /////////////////////////// test inference //////////////////////////////////
+/*
 println "\t\tINFERRING...";
 
 def testDir = dir+'test'+java.io.File.separator;
@@ -222,7 +222,7 @@ for (Predicate p : [goCC, goMF, goBP])
 
 // don't close the sl interactions this time, but clamp everything else
 Database testDB = data.getDatabase(testPart, [gene, ppiConnected, goCC, goMF, goBP] as Set);
-LazyMPEInference inference = new LazyMPEInference(m, testDB, config);
+//LazyMPEInference inference = new LazyMPEInference(m, testDB, config);
 inference.mpeInference();
 inference.close();
 
@@ -230,4 +230,4 @@ println "\t\tINFERENCE DONE";
 
 for (GroundAtom atom : Queries.getAllAtoms(testDB, sl))
 	println atom.toString() + "\t" + atom.getValue();
-
+*/
