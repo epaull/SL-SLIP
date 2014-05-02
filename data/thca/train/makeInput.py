@@ -1,5 +1,6 @@
 #!/usr/bin/env	python
 
+import networkx as nx
 
 from optparse import OptionParser
 parser = OptionParser()
@@ -21,7 +22,7 @@ def parseVals(file, network_nodes=None):
 	lineno = 1
 	for line in fh:
 		parts = line.rstrip().split("\t")
-		vals.add( parts )
+		vals.add( tuple(parts) )
 
 		lineno += 1
 
@@ -46,7 +47,7 @@ def parseCorr(file):
 		if first:
 			first = False
 			continue
-		geneA, link, geneB, brafR, brafP, rasR, rasP, diff, sign, signaling_type = line.rstrip().split("\t")
+		geneA, geneB, brafR, brafP, rasR, rasP, diff, sign, signaling_type = line.rstrip().split("\t")
 
 		if signaling_type == "Prot -> Prot":
 			prot2prot.add( (geneA, geneB, brafR, rasR) )
@@ -86,20 +87,38 @@ def parseNet(file):
 
 def printGO(fh, vals, map):
 	for (geneA, geneB, val) in vals:
-		print fh.write("\t".join(map[geneA], map[geneB], str(val))+"\n")
+		fh.write("\t".join( [map[geneA], map[geneB], str(abs(float(val)))] )+"\n")
 	fh.close()	
 
 def printCorr(fh, vals, map, idx):
 	for (geneA, geneB, val1, val2) in vals:
 		if idx == 1:
-			print fh.write("\t".join(map[geneA], map[geneB], str(val1))+"\n")
+			fh.write("\t".join( [map[geneA], map[geneB], str(abs(float(val1)))] )+"\n")
 		else:
-			print fh.write("\t".join(map[geneA], map[geneB], str(val2))+"\n")
+			fh.write("\t".join( [map[geneA], map[geneB], str(abs(float(val2)))] )+"\n")
 	fh.close()	
 
 	
 # get mappings, name to id
 name2id, edges = parseNet(opts.network)
+
+# make a digraph
+graph = nx.DiGraph()
+graph.add_edges_from( edges )
+length = nx.all_pairs_shortest_path_length(graph)
+spls = set()
+for geneA in name2id:
+	for geneB in name2id:
+		if geneA == geneB:
+			continue
+		if geneA not in length:
+			continue
+		if geneB not in length[geneA]:
+			continue
+		l = length[geneA][geneB]	
+		spls.add( (geneA, geneB, l) )
+
+
 goBP = parseVals(opts.goBP)
 goCC = parseVals(opts.goCC)
 prot2prot, expr2expr, expr2prot, prot2expr = parseCorr(opts.allpairs)
@@ -109,6 +128,10 @@ fh = open(out+'gene.txt', 'w')
 for name in name2id:
 	fh.write(name2id[name]+"\t"+name+"\n")
 fh.close()
+
+fh = open(out+'influences.txt', 'w')
+printGO(fh, spls, name2id)
+
 fh = open(out+'goBP.txt', 'w')
 printGO(fh, goBP, name2id)
 fh = open(out+'goCC.txt', 'w')
@@ -128,6 +151,10 @@ fh = open(out+'gene.txt', 'w')
 for name in name2id:
 	fh.write(name2id[name]+"\t"+name+"\n")
 fh.close()
+
+fh = open(out+'influences.txt', 'w')
+printGO(fh, spls, name2id)
+
 fh = open(out+'goBP.txt', 'w')
 printGO(fh, goBP, name2id)
 fh = open(out+'goCC.txt', 'w')
