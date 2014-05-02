@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.umd.cs.example;
+package src.main.ucsc;
 
 import edu.umd.cs.psl.application.inference.LazyMPEInference;
 import edu.umd.cs.psl.application.learning.weight.maxlikelihood.LazyMaxLikelihoodMPE;
@@ -43,11 +43,11 @@ import edu.umd.cs.psl.util.database.Queries;
  */
 
 ConfigManager cm = ConfigManager.getManager()
-ConfigBundle config = cm.getBundle("basic-example")
+ConfigBundle config = cm.getBundle("causal")
 
 /* Uses H2 as a DataStore and stores it in a temp. directory by default */
 def defaultPath = System.getProperty("java.io.tmpdir")
-String dbpath = config.getString("dbpath", defaultPath + File.separator + "basic-example")
+String dbpath = config.getString("dbpath", defaultPath + File.separator + "causal-path")
 println dbpath;
 DataStore data = new RDBMSDataStore(new H2DatabaseDriver(Type.Disk, dbpath, true), config)
 
@@ -72,33 +72,43 @@ m.add predicate: "influences"	, types: [ArgumentType.UniqueID, ArgumentType.Uniq
 
 // Additional CLOSED target predicates for grounded data
 
-// data driven, expression-based from a differential analysis mutation vs not groups
-m.add predicate: "diffExpr"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
-
-// data driven, expression-based, correlation in expression 
-m.add predicate: "exprCorr"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
+// correlation, protein to protein
+m.add predicate: "prot2protCOR"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
+m.add predicate: "prot2exprCOR"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
+m.add predicate: "expr2exprCOR"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
+m.add predicate: "expr2protCOR"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 
 // gene ontology based
 m.add predicate: "goCC"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 m.add predicate: "goMF"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 m.add predicate: "goBP"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 
-// physical PPI connections: a heat-diffusion kernel distance, normalized from 0 to 1
-m.add predicate: "ppi"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
+// physical PPI connections: a heat-diffusion kernel distance or path, normalized from 0 to 1
+// m.add predicate: "physicalDistance"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 
 // test rules that predict which go category similarities are most predictive. 
-m.add rule : goBP(A,B) & diffExpr(A,B) >> influences(A,B), weight : 1
-m.add rule : goCC(A,B) & diffExpr(A,B) >> influences(A,B), weight : 1
-m.add rule : goMF(A,B) & diffExpr(A,B) >> influences(A,B), weight : 1
+m.add rule : ( goBP(A,B) & prot2protCOR(A,B) ) >> influences(A,B), weight : 1
+m.add rule : ( goCC(A,B) & prot2protCOR(A,B) ) >> influences(A,B), weight : 1
+m.add rule : ( goMF(A,B) & prot2protCOR(A,B) ) >> influences(A,B), weight : 1
 
 // test rules that predict which go category similarities are most predictive. 
-m.add rule : goBP(A,B) & diffExpr(A,B) >> influences(A,B), weight : 1
-m.add rule : goCC(A,B) & diffExpr(A,B) >> influences(A,B), weight : 1
-m.add rule : goMF(A,B) & diffExpr(A,B) >> influences(A,B), weight : 1
+m.add rule : ( goBP(A,B) & expr2protCOR(A,B) ) >> influences(A,B), weight : 1
+m.add rule : ( goCC(A,B) & expr2protCOR(A,B) ) >> influences(A,B), weight : 1
+m.add rule : ( goMF(A,B) & expr2protCOR(A,B) ) >> influences(A,B), weight : 1
+
+// test rules that predict which go category similarities are most predictive. 
+m.add rule : ( goBP(A,B) & expr2exprCOR(A,B) ) >> influences(A,B), weight : 1
+m.add rule : ( goCC(A,B) & expr2exprCOR(A,B) ) >> influences(A,B), weight : 1
+m.add rule : ( goMF(A,B) & expr2exprCOR(A,B) ) >> influences(A,B), weight : 1
+
+// test rules that predict which go category similarities are most predictive. 
+m.add rule : ( goBP(A,B) & prot2exprCOR(A,B) ) >> influences(A,B), weight : 1
+m.add rule : ( goCC(A,B) & prot2exprCOR(A,B) ) >> influences(A,B), weight : 1
+m.add rule : ( goMF(A,B) & prot2exprCOR(A,B) ) >> influences(A,B), weight : 1
 
 // 'friends' also likely to be connected in network
 // encode a function to make this [0,1] where directly connected things are 1
-m.add rule : influences(A,B) >> distance(A,B),  weight : 3
+// m.add rule : influences(A,B) >> ~physicalDistance(A,B),  weight : 3
 
 /*
  * Finally, we define a prior on the inference predicate sl. 
@@ -117,8 +127,7 @@ println m;
 Partition trainPart = new Partition(0);
 Partition truthPart = new Partition(1);
 
-def dir = 'data'+java.io.File.separator+'test'+java.io.File.separator;
-def trainDir = dir+'train'+java.io.File.separator;
+def dir = '../../data/thca/train';
 
 // Load static data
 for (Predicate p : [gene])
@@ -128,9 +137,9 @@ for (Predicate p : [gene])
 	InserterUtils.loadDelimitedData(insert, trainDir+p.getName()+".txt");
 }
 
-// load training 'truth' data. These should have a third column, 0-1 values
+// load training closed predicates
 // 
-for (Predicate p : [goCC, goMF, goBP])
+for (Predicate p : [goCC, goMF, goBP, prot2protCOR, expr2exprCOR, expr2protCOR, prot2exprCOR])
 {
         println "\t\t\tREADING Training Data " + trainDir+p.getName()+".txt";
 	insert = data.getInserter(p, trainPart)
@@ -139,14 +148,14 @@ for (Predicate p : [goCC, goMF, goBP])
 	
 
 println "\t\t\tLoading existing sl interactions.."
-insert = data.getInserter(sl, truthPart)
+insert = data.getInserter(influences, truthPart)
 InserterUtils.loadDelimitedDataTruth(insert, trainDir+sl.getName()+".txt");
 
 //////////////////////////// weight learning ///////////////////////////
 println "\t\tLEARNING WEIGHTS...";
 
-Database trainDB = data.getDatabase(trainPart, [gene, goCC, goBP, goMF] as Set);
-Database truthDB = data.getDatabase(truthPart, [sl] as Set);
+Database trainDB = data.getDatabase(trainPart, [gene, physicalDistance, goCC, goBP, goMF] as Set);
+Database truthDB = data.getDatabase(truthPart, [influences] as Set);
 
 LazyMaxLikelihoodMPE weightLearning = new LazyMaxLikelihoodMPE(m, trainDB, truthDB, config);
 weightLearning.learn();
@@ -162,7 +171,7 @@ println "\t\tINFERRING...";
 def testDir = dir+'test'+java.io.File.separator;
 Partition testPart = new Partition(2);
 // Load static data
-for (Predicate p : [gene, sl])
+for (Predicate p : [gene])
 {
         println "\t\t\tREADING Ground Variable " + testDir+p.getName()+".txt";
 	insert = data.getInserter(p, testPart)
@@ -171,7 +180,7 @@ for (Predicate p : [gene, sl])
 
 // load training 'truth' data. These should have a third column, 0-1 values
 // 
-for (Predicate p : [goCC, goMF, goBP])
+for (Predicate p : [goCC, goMF, goBP, prot2protCOR, expr2exprCOR, expr2protCOR, prot2exprCOR])
 {
         println "\t\t\tREADING Training Data " + testDir+p.getName()+".txt";
 	insert = data.getInserter(p, testPart)
@@ -179,14 +188,14 @@ for (Predicate p : [goCC, goMF, goBP])
 }
 
 
-// don't close the sl interactions this time, but clamp everything else
-Database testDB = data.getDatabase(testPart, [gene, goCC, goMF, goBP] as Set);
+// don't close the sl interactions this time, but clamp everything else except for 'influences'
+Database testDB = data.getDatabase(testPart, [gene, goCC, goMF, goBP, prot2protCOR, expr2exprCOR, expr2protCOR, prot2exprCOR] as Set);
 LazyMPEInference inference = new LazyMPEInference(m, testDB, config);
 inference.mpeInference();
 inference.close();
 
 println "\t\tINFERENCE DONE";
 
-for (GroundAtom atom : Queries.getAllAtoms(testDB, sl))
+for (GroundAtom atom : Queries.getAllAtoms(testDB, influences))
 	println atom.toString() + "\t" + atom.getValue();
 
