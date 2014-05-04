@@ -1,6 +1,12 @@
 #!/usr/bin/env	python
 
+"""
+
+ Need to map all values to somewhere in 0-1 range for PSL. A good number need to be in the .66+ range here, 
+ it's a lot like paradigm
+"""
 import networkx as nx
+import math
 
 from optparse import OptionParser
 parser = OptionParser()
@@ -9,6 +15,8 @@ parser.add_option("--goCC",dest="goCC",action="store",type="string",default=None
 parser.add_option("--allpairs",dest="allpairs",action="store",type="string",default=None)
 parser.add_option("--network",dest="network",action="store",type="string",default=None)
 (opts, args) = parser.parse_args()
+
+
 
 def parseVals(file, network_nodes=None):
 	
@@ -111,12 +119,13 @@ for geneA in name2id:
 	for geneB in name2id:
 		if geneA == geneB:
 			continue
-		if geneA not in length:
-			continue
-		if geneB not in length[geneA]:
-			continue
-		l = length[geneA][geneB]	
-		spls.add( (geneA, geneB, l) )
+		if geneA not in length or geneB not in length[geneA]:
+			spls.add( (geneA, geneB, "0") )
+		else:
+			l = length[geneA][geneB]	
+			# convert, 0-1 range
+			l = 1/float(l)
+			spls.add( (geneA, geneB, l) )
 
 
 goBP = parseVals(opts.goBP)

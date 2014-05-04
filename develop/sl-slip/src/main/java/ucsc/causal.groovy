@@ -18,6 +18,8 @@ package src.main.ucsc;
 
 import edu.umd.cs.psl.application.inference.LazyMPEInference;
 import edu.umd.cs.psl.application.learning.weight.maxlikelihood.LazyMaxLikelihoodMPE;
+import edu.umd.cs.psl.application.inference.MPEInference;
+import edu.umd.cs.psl.application.learning.weight.maxlikelihood.MaxLikelihoodMPE;
 import edu.umd.cs.psl.config.*
 import edu.umd.cs.psl.database.DataStore
 import edu.umd.cs.psl.database.Database;
@@ -80,31 +82,31 @@ m.add predicate: "expr2protCOR"	, types: [ArgumentType.UniqueID, ArgumentType.Un
 
 // gene ontology based
 m.add predicate: "goCC"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
-m.add predicate: "goMF"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
+//m.add predicate: "goMF"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 m.add predicate: "goBP"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 
 // physical PPI connections: a heat-diffusion kernel distance or path, normalized from 0 to 1
 // m.add predicate: "physicalDistance"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 
 // test rules that predict which go category similarities are most predictive. 
-m.add rule : ( goBP(A,B) & prot2protCOR(A,B) ) >> influences(A,B), weight : 1
-m.add rule : ( goCC(A,B) & prot2protCOR(A,B) ) >> influences(A,B), weight : 1
-m.add rule : ( goMF(A,B) & prot2protCOR(A,B) ) >> influences(A,B), weight : 1
+m.add rule : ( goBP(A,B) & prot2protCOR(A,B) & (A - B) ) >> influences(A,B), weight : 5
+m.add rule : ( goCC(A,B) & prot2protCOR(A,B) & (A - B) ) >> influences(A,B), weight : 5
+//m.add rule : ( goMF(A,B) & prot2protCOR(A,B) ) >> influences(A,B), weight : 1
 
 // test rules that predict which go category similarities are most predictive. 
-m.add rule : ( goBP(A,B) & expr2protCOR(A,B) ) >> influences(A,B), weight : 1
-m.add rule : ( goCC(A,B) & expr2protCOR(A,B) ) >> influences(A,B), weight : 1
-m.add rule : ( goMF(A,B) & expr2protCOR(A,B) ) >> influences(A,B), weight : 1
+m.add rule : ( goBP(A,B) & expr2protCOR(A,B) & (A - B) & (A ^ B) ) >> influences(A,B), weight : 1 
+m.add rule : ( goCC(A,B) & expr2protCOR(A,B) & (A - B) & (A ^ B) ) >> influences(A,B), weight : 1
+//m.add rule : ( goMF(A,B) & expr2protCOR(A,B) ) >> influences(A,B), weight : 1
 
 // test rules that predict which go category similarities are most predictive. 
-m.add rule : ( goBP(A,B) & expr2exprCOR(A,B) ) >> influences(A,B), weight : 1
-m.add rule : ( goCC(A,B) & expr2exprCOR(A,B) ) >> influences(A,B), weight : 1
-m.add rule : ( goMF(A,B) & expr2exprCOR(A,B) ) >> influences(A,B), weight : 1
+m.add rule : ( goBP(A,B) & expr2exprCOR(A,B) & (A - B) & (A ^ B) ) >> influences(A,B), weight : 1
+m.add rule : ( goCC(A,B) & expr2exprCOR(A,B) & (A - B) & (A ^ B) ) >> influences(A,B), weight : 1
+//m.add rule : ( goMF(A,B) & expr2exprCOR(A,B) ) >> influences(A,B), weight : 1
 
 // test rules that predict which go category similarities are most predictive. 
-m.add rule : ( goBP(A,B) & prot2exprCOR(A,B) ) >> influences(A,B), weight : 1
-m.add rule : ( goCC(A,B) & prot2exprCOR(A,B) ) >> influences(A,B), weight : 1
-m.add rule : ( goMF(A,B) & prot2exprCOR(A,B) ) >> influences(A,B), weight : 1
+m.add rule : ( goBP(A,B) & prot2exprCOR(A,B) & (A - B) & (A ^ B) ) >> influences(A,B), weight : 3
+m.add rule : ( goCC(A,B) & prot2exprCOR(A,B) & (A - B) & (A ^ B) ) >> influences(A,B), weight : 3
+//m.add rule : ( goMF(A,B) & prot2exprCOR(A,B) ) >> influences(A,B), weight : 1
 
 // 'friends' also likely to be connected in network
 // encode a function to make this [0,1] where directly connected things are 1
@@ -113,7 +115,7 @@ m.add rule : ( goMF(A,B) & prot2exprCOR(A,B) ) >> influences(A,B), weight : 1
 /*
  * Finally, we define a prior on the inference predicate sl. 
  */
-m.add rule: ~influences(A,B), weight: 1
+m.add rule: ~influences(A,B), weight: 1.0
 
 /*
  * Let's see what our model looks like.
@@ -127,7 +129,7 @@ println m;
 Partition trainPart = new Partition(0);
 Partition truthPart = new Partition(1);
 
-def dir = '../../data/thca/train';
+def trainDir = '../../data/thca/train/braf/';
 
 // Load static data
 for (Predicate p : [gene])
@@ -139,7 +141,7 @@ for (Predicate p : [gene])
 
 // load training closed predicates
 // 
-for (Predicate p : [goCC, goMF, goBP, prot2protCOR, expr2exprCOR, expr2protCOR, prot2exprCOR])
+for (Predicate p : [goCC, goBP, prot2protCOR, expr2exprCOR, expr2protCOR, prot2exprCOR])
 {
         println "\t\t\tREADING Training Data " + trainDir+p.getName()+".txt";
 	insert = data.getInserter(p, trainPart)
@@ -147,14 +149,14 @@ for (Predicate p : [goCC, goMF, goBP, prot2protCOR, expr2exprCOR, expr2protCOR, 
 }
 	
 
-println "\t\t\tLoading existing sl interactions.."
+println "\t\t\tLoading existing interactions.."
 insert = data.getInserter(influences, truthPart)
-InserterUtils.loadDelimitedDataTruth(insert, trainDir+sl.getName()+".txt");
+InserterUtils.loadDelimitedDataTruth(insert, trainDir+influences.getName()+".txt");
 
 //////////////////////////// weight learning ///////////////////////////
 println "\t\tLEARNING WEIGHTS...";
 
-Database trainDB = data.getDatabase(trainPart, [gene, physicalDistance, goCC, goBP, goMF] as Set);
+Database trainDB = data.getDatabase(trainPart, [gene, goCC, goBP, prot2protCOR, expr2exprCOR, expr2protCOR, prot2exprCOR] as Set);
 Database truthDB = data.getDatabase(truthPart, [influences] as Set);
 
 LazyMaxLikelihoodMPE weightLearning = new LazyMaxLikelihoodMPE(m, trainDB, truthDB, config);
@@ -168,7 +170,7 @@ println m
 /////////////////////////// test inference //////////////////////////////////
 println "\t\tINFERRING...";
 
-def testDir = dir+'test'+java.io.File.separator;
+def testDir = '../../data/thca/test/braf/';
 Partition testPart = new Partition(2);
 // Load static data
 for (Predicate p : [gene])
@@ -180,7 +182,7 @@ for (Predicate p : [gene])
 
 // load training 'truth' data. These should have a third column, 0-1 values
 // 
-for (Predicate p : [goCC, goMF, goBP, prot2protCOR, expr2exprCOR, expr2protCOR, prot2exprCOR])
+for (Predicate p : [goCC, goBP, prot2protCOR, expr2exprCOR, expr2protCOR, prot2exprCOR])
 {
         println "\t\t\tREADING Training Data " + testDir+p.getName()+".txt";
 	insert = data.getInserter(p, testPart)
@@ -189,7 +191,7 @@ for (Predicate p : [goCC, goMF, goBP, prot2protCOR, expr2exprCOR, expr2protCOR, 
 
 
 // don't close the sl interactions this time, but clamp everything else except for 'influences'
-Database testDB = data.getDatabase(testPart, [gene, goCC, goMF, goBP, prot2protCOR, expr2exprCOR, expr2protCOR, prot2exprCOR] as Set);
+Database testDB = data.getDatabase(testPart, [gene, goCC, goBP, prot2protCOR, expr2exprCOR, expr2protCOR, prot2exprCOR] as Set);
 LazyMPEInference inference = new LazyMPEInference(m, testDB, config);
 inference.mpeInference();
 inference.close();
