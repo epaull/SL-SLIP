@@ -88,34 +88,43 @@ m.add predicate: "goBP"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 // physical PPI connections: a heat-diffusion kernel distance or path, normalized from 0 to 1
 // m.add predicate: "physicalDistance"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 
+// FIXME: symmmetric on go process similarity, but not on the others
 // test rules that predict which go category similarities are most predictive. 
-m.add rule : ( goBP(A,B) & prot2protCOR(A,B) & (A - B) ) >> influences(A,B), weight : 5
-m.add rule : ( goCC(A,B) & prot2protCOR(A,B) & (A - B) ) >> influences(A,B), weight : 5
+m.add rule : ( goBP(A,B) & prot2protCOR(A,B)  ) >> influences(A,B), weight : 5
+m.add rule : ( goCC(A,B) & prot2protCOR(A,B)  ) >> influences(A,B), weight : 5
 //m.add rule : ( goMF(A,B) & prot2protCOR(A,B) ) >> influences(A,B), weight : 1
 
 // test rules that predict which go category similarities are most predictive. 
-m.add rule : ( goBP(A,B) & expr2protCOR(A,B) & (A - B) & (A ^ B) ) >> influences(A,B), weight : 1 
-m.add rule : ( goCC(A,B) & expr2protCOR(A,B) & (A - B) & (A ^ B) ) >> influences(A,B), weight : 1
+m.add rule : ( goBP(A,B) & expr2protCOR(A,B)  ) >> influences(A,B), weight : 1 
+m.add rule : ( goCC(A,B) & expr2protCOR(A,B)  ) >> influences(A,B), weight : 1
 //m.add rule : ( goMF(A,B) & expr2protCOR(A,B) ) >> influences(A,B), weight : 1
 
 // test rules that predict which go category similarities are most predictive. 
-m.add rule : ( goBP(A,B) & expr2exprCOR(A,B) & (A - B) & (A ^ B) ) >> influences(A,B), weight : 1
-m.add rule : ( goCC(A,B) & expr2exprCOR(A,B) & (A - B) & (A ^ B) ) >> influences(A,B), weight : 1
+m.add rule : ( goBP(A,B) & expr2exprCOR(A,B)  ) >> influences(A,B), weight : 1
+m.add rule : ( goCC(A,B) & expr2exprCOR(A,B)  ) >> influences(A,B), weight : 1
 //m.add rule : ( goMF(A,B) & expr2exprCOR(A,B) ) >> influences(A,B), weight : 1
 
 // test rules that predict which go category similarities are most predictive. 
-m.add rule : ( goBP(A,B) & prot2exprCOR(A,B) & (A - B) & (A ^ B) ) >> influences(A,B), weight : 3
-m.add rule : ( goCC(A,B) & prot2exprCOR(A,B) & (A - B) & (A ^ B) ) >> influences(A,B), weight : 3
+m.add rule : ( goBP(A,B) & prot2exprCOR(A,B)  ) >> influences(A,B), weight : 3
+m.add rule : ( goCC(A,B) & prot2exprCOR(A,B)  ) >> influences(A,B), weight : 3
 //m.add rule : ( goMF(A,B) & prot2exprCOR(A,B) ) >> influences(A,B), weight : 1
 
 // 'friends' also likely to be connected in network
 // encode a function to make this [0,1] where directly connected things are 1
 // m.add rule : influences(A,B) >> ~physicalDistance(A,B),  weight : 3
 
+m.add PredicateConstraint.Symmetric, on : goCC
+m.add PredicateConstraint.Symmetric, on : goBP
+m.add PredicateConstraint.Symmetric, on : influences
+m.add PredicateConstraint.Symmetric, on : prot2exprCOR
+m.add PredicateConstraint.Symmetric, on : expr2exprCOR
+m.add PredicateConstraint.Symmetric, on : expr2protCOR
+m.add PredicateConstraint.Symmetric, on : prot2protCOR
+
 /*
  * Finally, we define a prior on the inference predicate sl. 
  */
-m.add rule: ~influences(A,B), weight: 1.0
+m.add rule: ~influences(A,B), weight: 5.0
 
 /*
  * Let's see what our model looks like.

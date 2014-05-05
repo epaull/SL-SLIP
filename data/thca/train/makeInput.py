@@ -17,6 +17,7 @@ parser.add_option("--network",dest="network",action="store",type="string",defaul
 (opts, args) = parser.parse_args()
 
 
+PSEUDO_COUNT = 0.01
 
 def parseVals(file, network_nodes=None):
 	
@@ -94,8 +95,21 @@ def parseNet(file):
 	return (map, edges)
 
 def printGO(fh, vals, map):
+
+	# linearly scale from 0-1
+	max = 0
 	for (geneA, geneB, val) in vals:
-		fh.write("\t".join( [map[geneA], map[geneB], str(abs(float(val)))] )+"\n")
+		if abs(float(val)) > max:
+			max = abs(float(val)) + PSEUDO_COUNT
+
+	for (geneA, geneB, val) in vals:
+
+		# add pseudo-counts
+		val = float(val)
+		val += PSEUDO_COUNT
+
+		fh.write("\t".join( [map[geneA], map[geneB], str(abs(float(val))/max)] )+"\n")
+
 	fh.close()	
 
 def printCorr(fh, vals, map, idx):

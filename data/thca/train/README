@@ -1,0 +1,6 @@
+--need to include any evidence here and push near 1.0 for PSL framework to work. 
+For instance, the correlation is small but significant for BRAF -> RAF1, and there is
+some similarity in both goCC and goBP. I'll need to threshold values above a small number to something like
+0.9 for the learner to work, and maybe formulate a new rule that considers similarity
+in both. Also, symmetric values prot2prot, etc need to be considered, and influences is also symmetric
+as we can add on the directionality later in post-processing
