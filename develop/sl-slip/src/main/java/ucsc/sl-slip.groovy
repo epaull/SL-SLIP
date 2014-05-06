@@ -16,8 +16,8 @@
  */
 package src.main.ucsc;
 
-//import edu.umd.cs.psl.application.inference.LazyMPEInference;
-//import edu.umd.cs.psl.application.learning.weight.maxlikelihood.LazyMaxLikelihoodMPE;
+import edu.umd.cs.psl.application.inference.MPEInference;
+import edu.umd.cs.psl.application.learning.weight.maxlikelihood.MaxLikelihoodMPE;
 import edu.umd.cs.psl.config.*
 import edu.umd.cs.psl.database.DataStore
 import edu.umd.cs.psl.database.Database;
@@ -259,4 +259,3 @@ println "\t\tINFERENCE DONE";
 
 for (GroundAtom atom : Queries.getAllAtoms(testDB, sl))
 	println atom.toString() + "\t" + atom.getValue();
-*/
