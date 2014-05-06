@@ -43,8 +43,8 @@ def parseCorr(file):
 
 	prot2prot = set()
 	expr2expr = set()
-	expr2prot = set()
 	prot2expr = set()
+	expr2prot = set()
 	fh = None
 	try:
 		fh = open(file, 'r')
@@ -94,7 +94,27 @@ def parseNet(file):
 	
 	return (map, edges)
 
-def printGO(fh, vals, map):
+def printLengths(fh, vals, map):
+
+	# linearly scale from 0-1
+	max = 0
+	for (geneA, geneB) in vals:
+		val = vals[(geneA, geneB)]
+		if abs(float(val)) > max:
+			max = abs(float(val)) + PSEUDO_COUNT
+
+	for (geneA, geneB) in vals:
+		val = vals[(geneA, geneB)]
+
+		# add pseudo-counts
+		val = float(val)
+		val += PSEUDO_COUNT
+
+		fh.write("\t".join( [map[geneA], map[geneB], str(abs(float(val))/max)] )+"\n")
+		fh.write("\t".join( [map[geneB], map[geneA], str(abs(float(val))/max)] )+"\n")
+
+	fh.close()	
+def printGO(fh, vals, map, symmetric=True):
 
 	# linearly scale from 0-1
 	max = 0
@@ -109,6 +129,9 @@ def printGO(fh, vals, map):
 		val += PSEUDO_COUNT
 
 		fh.write("\t".join( [map[geneA], map[geneB], str(abs(float(val))/max)] )+"\n")
+		# print the symmetric case
+		if symmetric:
+			fh.write("\t".join( [map[geneB], map[geneA], str(abs(float(val))/max)] )+"\n")
 
 	fh.close()	
 
@@ -116,8 +139,10 @@ def printCorr(fh, vals, map, idx):
 	for (geneA, geneB, val1, val2) in vals:
 		if idx == 1:
 			fh.write("\t".join( [map[geneA], map[geneB], str(abs(float(val1)))] )+"\n")
+			fh.write("\t".join( [map[geneB], map[geneA], str(abs(float(val1)))] )+"\n")
 		else:
 			fh.write("\t".join( [map[geneA], map[geneB], str(abs(float(val2)))] )+"\n")
+			fh.write("\t".join( [map[geneB], map[geneA], str(abs(float(val2)))] )+"\n")
 	fh.close()	
 
 	
@@ -128,18 +153,20 @@ name2id, edges = parseNet(opts.network)
 graph = nx.DiGraph()
 graph.add_edges_from( edges )
 length = nx.all_pairs_shortest_path_length(graph)
-spls = set()
+spls = {}
 for geneA in name2id:
 	for geneB in name2id:
 		if geneA == geneB:
 			continue
+		elif (geneB, geneA) in spls:
+			continue
 		if geneA not in length or geneB not in length[geneA]:
-			spls.add( (geneA, geneB, "0") )
+			spls[(geneA, geneB)] = "0"
 		else:
 			l = length[geneA][geneB]	
 			# convert, 0-1 range
 			l = 1/float(l)
-			spls.add( (geneA, geneB, l) )
+			spls[(geneA, geneB)] = l
 
 
 goBP = parseVals(opts.goBP)
@@ -153,7 +180,7 @@ for name in name2id:
 fh.close()
 
 fh = open(out+'influences.txt', 'w')
-printGO(fh, spls, name2id)
+printLengths(fh, spls, name2id)
 
 fh = open(out+'goBP.txt', 'w')
 printGO(fh, goBP, name2id)
@@ -176,7 +203,7 @@ for name in name2id:
 fh.close()
 
 fh = open(out+'influences.txt', 'w')
-printGO(fh, spls, name2id)
+printLengths(fh, spls, name2id)
 
 fh = open(out+'goBP.txt', 'w')
 printGO(fh, goBP, name2id)

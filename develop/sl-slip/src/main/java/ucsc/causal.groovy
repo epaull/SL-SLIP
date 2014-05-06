@@ -23,6 +23,7 @@ import edu.umd.cs.psl.application.learning.weight.maxlikelihood.MaxLikelihoodMPE
 import edu.umd.cs.psl.config.*
 import edu.umd.cs.psl.database.DataStore
 import edu.umd.cs.psl.database.Database;
+import edu.umd.cs.psl.database.DatabasePopulator;
 import edu.umd.cs.psl.database.Partition;
 import edu.umd.cs.psl.database.ReadOnlyDatabase;
 import edu.umd.cs.psl.database.rdbms.RDBMSDataStore
@@ -90,23 +91,23 @@ m.add predicate: "goBP"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 
 // FIXME: symmmetric on go process similarity, but not on the others
 // test rules that predict which go category similarities are most predictive. 
-m.add rule : ( goBP(A,B) & prot2protCOR(A,B)  ) >> influences(A,B), weight : 5
-m.add rule : ( goCC(A,B) & prot2protCOR(A,B)  ) >> influences(A,B), weight : 5
-//m.add rule : ( goMF(A,B) & prot2protCOR(A,B) ) >> influences(A,B), weight : 1
+m.add rule : ( goBP(A,B) & goCC(A,B) & prot2protCOR(A,B)  ) >> influences(A,B), weight : 3
+// m.add rule : ( goCC(A,B) & prot2protCOR(A,B)  ) >> influences(A,B), weight : 5
+// m.add rule : ( goMF(A,B) & prot2protCOR(A,B) ) >> influences(A,B), weight : 1
 
 // test rules that predict which go category similarities are most predictive. 
-m.add rule : ( goBP(A,B) & expr2protCOR(A,B)  ) >> influences(A,B), weight : 1 
-m.add rule : ( goCC(A,B) & expr2protCOR(A,B)  ) >> influences(A,B), weight : 1
+ m.add rule : ( goBP(A,B) & goCC(A,B) & expr2protCOR(A,B)  ) >> influences(A,B), weight : 3 
+// m.add rule : ( goCC(A,B) & expr2protCOR(A,B)  ) >> influences(A,B), weight : 1
 //m.add rule : ( goMF(A,B) & expr2protCOR(A,B) ) >> influences(A,B), weight : 1
 
 // test rules that predict which go category similarities are most predictive. 
-m.add rule : ( goBP(A,B) & expr2exprCOR(A,B)  ) >> influences(A,B), weight : 1
-m.add rule : ( goCC(A,B) & expr2exprCOR(A,B)  ) >> influences(A,B), weight : 1
+m.add rule : ( goBP(A,B) & goCC(A,B) & expr2exprCOR(A,B)  ) >> influences(A,B), weight : 3
+//m.add rule : ( goCC(A,B) & expr2exprCOR(A,B)  ) >> influences(A,B), weight : 1
 //m.add rule : ( goMF(A,B) & expr2exprCOR(A,B) ) >> influences(A,B), weight : 1
 
 // test rules that predict which go category similarities are most predictive. 
-m.add rule : ( goBP(A,B) & prot2exprCOR(A,B)  ) >> influences(A,B), weight : 3
-m.add rule : ( goCC(A,B) & prot2exprCOR(A,B)  ) >> influences(A,B), weight : 3
+m.add rule : ( goBP(A,B) & goCC(A,B) & prot2exprCOR(A,B)  ) >> influences(A,B), weight : 3
+//m.add rule : ( goCC(A,B) & prot2exprCOR(A,B)  ) >> influences(A,B), weight : 3
 //m.add rule : ( goMF(A,B) & prot2exprCOR(A,B) ) >> influences(A,B), weight : 1
 
 // 'friends' also likely to be connected in network
@@ -124,7 +125,7 @@ m.add PredicateConstraint.Symmetric, on : prot2protCOR
 /*
  * Finally, we define a prior on the inference predicate sl. 
  */
-m.add rule: ~influences(A,B), weight: 5.0
+m.add rule: ~influences(A,B), weight: 1.0
 
 /*
  * Let's see what our model looks like.
@@ -165,10 +166,14 @@ InserterUtils.loadDelimitedDataTruth(insert, trainDir+influences.getName()+".txt
 //////////////////////////// weight learning ///////////////////////////
 println "\t\tLEARNING WEIGHTS...";
 
-Database trainDB = data.getDatabase(trainPart, [gene, goCC, goBP, prot2protCOR, expr2exprCOR, expr2protCOR, prot2exprCOR] as Set);
+Database trainDB = data.getDatabase(trainPart, [gene, goCC, goBP, prot2protCOR, expr2exprCOR,  expr2protCOR, prot2exprCOR] as Set);
 Database truthDB = data.getDatabase(truthPart, [influences] as Set);
 
-LazyMaxLikelihoodMPE weightLearning = new LazyMaxLikelihoodMPE(m, trainDB, truthDB, config);
+// populate database
+DatabasePopulator dbPop = new DatabasePopulator(trainDB);
+dbPop.populateFromDB(truthDB, influences);
+
+MaxLikelihoodMPE weightLearning = new MaxLikelihoodMPE(m, trainDB, truthDB, config);
 weightLearning.learn();
 weightLearning.close();
 
@@ -201,7 +206,7 @@ for (Predicate p : [goCC, goBP, prot2protCOR, expr2exprCOR, expr2protCOR, prot2e
 
 // don't close the sl interactions this time, but clamp everything else except for 'influences'
 Database testDB = data.getDatabase(testPart, [gene, goCC, goBP, prot2protCOR, expr2exprCOR, expr2protCOR, prot2exprCOR] as Set);
-LazyMPEInference inference = new LazyMPEInference(m, testDB, config);
+MPEInference inference = new MPEInference(m, testDB, config);
 inference.mpeInference();
 inference.close();
 
