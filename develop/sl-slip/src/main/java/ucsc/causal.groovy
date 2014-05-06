@@ -91,27 +91,24 @@ m.add predicate: "goBP"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 
 // FIXME: symmmetric on go process similarity, but not on the others
 // test rules that predict which go category similarities are most predictive. 
-m.add rule : ( goBP(A,B) & goCC(A,B) & prot2protCOR(A,B)  ) >> influences(A,B), weight : 3
-// m.add rule : ( goCC(A,B) & prot2protCOR(A,B)  ) >> influences(A,B), weight : 5
-// m.add rule : ( goMF(A,B) & prot2protCOR(A,B) ) >> influences(A,B), weight : 1
+m.add rule : ( goCC(A,B) & prot2protCOR(A,B)  ) >> influences(A,B), weight : 1
+m.add rule : ( goBP(A,B) & prot2protCOR(A,B) ) >> influences(A,B), weight : 1
 
 // test rules that predict which go category similarities are most predictive. 
- m.add rule : ( goBP(A,B) & goCC(A,B) & expr2protCOR(A,B)  ) >> influences(A,B), weight : 3 
-// m.add rule : ( goCC(A,B) & expr2protCOR(A,B)  ) >> influences(A,B), weight : 1
-//m.add rule : ( goMF(A,B) & expr2protCOR(A,B) ) >> influences(A,B), weight : 1
+m.add rule : ( goCC(A,B) & expr2protCOR(A,B)  ) >> influences(A,B), weight : 1
+m.add rule : ( goBP(A,B) & expr2protCOR(A,B) ) >> influences(A,B), weight : 1
 
 // test rules that predict which go category similarities are most predictive. 
-m.add rule : ( goBP(A,B) & goCC(A,B) & expr2exprCOR(A,B)  ) >> influences(A,B), weight : 3
-//m.add rule : ( goCC(A,B) & expr2exprCOR(A,B)  ) >> influences(A,B), weight : 1
-//m.add rule : ( goMF(A,B) & expr2exprCOR(A,B) ) >> influences(A,B), weight : 1
+m.add rule : ( goCC(A,B) & expr2exprCOR(A,B)  ) >> influences(A,B), weight : 1
+m.add rule : ( goBP(A,B) & expr2exprCOR(A,B) ) >> influences(A,B), weight : 1
 
 // test rules that predict which go category similarities are most predictive. 
-m.add rule : ( goBP(A,B) & goCC(A,B) & prot2exprCOR(A,B)  ) >> influences(A,B), weight : 3
-//m.add rule : ( goCC(A,B) & prot2exprCOR(A,B)  ) >> influences(A,B), weight : 3
-//m.add rule : ( goMF(A,B) & prot2exprCOR(A,B) ) >> influences(A,B), weight : 1
+m.add rule : ( goCC(A,B) & prot2exprCOR(A,B)  ) >> influences(A,B), weight : 3
+m.add rule : ( goBP(A,B) & prot2exprCOR(A,B) ) >> influences(A,B), weight : 1
 
 
-m.add rule : ( ~expr2exprCOR(A,B)  ) >> ~influences(A,B), weight : 1
+m.add rule : ( ~goCC(A,B)  ) >> ~influences(A,B), weight : 1
+m.add rule : ( ~goBP(A,B)  ) >> ~influences(A,B), weight : 1
 
 // 'friends' also likely to be connected in network
 // encode a function to make this [0,1] where directly connected things are 1
@@ -175,10 +172,11 @@ Database trainDB = data.getDatabase(predict_tr, [gene, goCC, goBP, prot2protCOR,
 Database truthDB = data.getDatabase(truthPart, [influences] as Set);
 
 // populate database
-DatabasePopulator dbPop = new DatabasePopulator(trainDB);
-dbPop.populateFromDB(truthDB, influences);
+// use this for MaxLikelihood learning (non-lazy) once it's working
+//DatabasePopulator dbPop = new DatabasePopulator(trainDB);
+//dbPop.populateFromDB(truthDB, influences);
 
-MaxLikelihoodMPE weightLearning = new MaxLikelihoodMPE(m, trainDB, truthDB, config);
+LazyMaxLikelihoodMPE weightLearning = new LazyMaxLikelihoodMPE(m, trainDB, truthDB, config);
 weightLearning.learn();
 weightLearning.close();
 
@@ -210,7 +208,7 @@ for (Predicate p : [goCC, goBP, prot2protCOR, expr2exprCOR, expr2protCOR, prot2e
 
 // don't close the sl interactions this time, but clamp everything else except for 'influences'
 Database testDB = data.getDatabase(testPart, [gene, goCC, goBP, prot2protCOR, expr2exprCOR, expr2protCOR, prot2exprCOR] as Set);
-MPEInference inference = new MPEInference(m, testDB, config);
+LazyMPEInference inference = new LazyMPEInference(m, testDB, config);
 inference.mpeInference();
 inference.close();
 

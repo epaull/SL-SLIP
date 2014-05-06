@@ -117,15 +117,21 @@ def printLengths(fh, vals, map):
 def printGO(fh, vals, map, symmetric=True):
 
 	# linearly scale from 0-1
-	max = 0
-	for (geneA, geneB, val) in vals:
-		if abs(float(val)) > max:
-			max = abs(float(val)) + PSEUDO_COUNT
+	#max = 0
+	#for (geneA, geneB, val) in vals:
+	#	if abs(float(val)) > max:
+	#		max = abs(float(val)) + PSEUDO_COUNT
 
 	for (geneA, geneB, val) in vals:
 
 		# add pseudo-counts
 		val = float(val)
+
+		# ERASE
+		max = 1
+		if val > 0:
+			val = 0.8
+
 		val += PSEUDO_COUNT
 
 		fh.write("\t".join( [map[geneA], map[geneB], str(abs(float(val))/max)] )+"\n")
@@ -137,6 +143,22 @@ def printGO(fh, vals, map, symmetric=True):
 
 def printCorr(fh, vals, map, idx):
 	for (geneA, geneB, val1, val2) in vals:
+
+		if val1 > 0.5:
+			val1 = 0.95
+		elif val1 > 0.25:
+			val1 = 0.9
+		elif val1 > 0.1:
+			val1 = 0.75
+
+		if val2 > 0.5:
+			val2 = 0.95
+		elif val2 > 0.25:
+			val2 = 0.9
+		elif val2 > 0.1:
+			val2 = 0.75
+
+
 		if idx == 1:
 			fh.write("\t".join( [map[geneA], map[geneB], str(abs(float(val1)))] )+"\n")
 			fh.write("\t".join( [map[geneB], map[geneA], str(abs(float(val1)))] )+"\n")
