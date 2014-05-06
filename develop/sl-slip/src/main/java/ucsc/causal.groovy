@@ -110,6 +110,9 @@ m.add rule : ( goBP(A,B) & goCC(A,B) & prot2exprCOR(A,B)  ) >> influences(A,B), 
 //m.add rule : ( goCC(A,B) & prot2exprCOR(A,B)  ) >> influences(A,B), weight : 3
 //m.add rule : ( goMF(A,B) & prot2exprCOR(A,B) ) >> influences(A,B), weight : 1
 
+
+m.add rule : ( ~expr2exprCOR(A,B)  ) >> ~influences(A,B), weight : 1
+
 // 'friends' also likely to be connected in network
 // encode a function to make this [0,1] where directly connected things are 1
 // m.add rule : influences(A,B) >> ~physicalDistance(A,B),  weight : 3
@@ -125,7 +128,7 @@ m.add PredicateConstraint.Symmetric, on : prot2protCOR
 /*
  * Finally, we define a prior on the inference predicate sl. 
  */
-m.add rule: ~influences(A,B), weight: 1.0
+m.add rule: ~influences(A,B), weight: 0.01
 
 /*
  * Let's see what our model looks like.
@@ -138,6 +141,8 @@ println m;
  */
 Partition trainPart = new Partition(0);
 Partition truthPart = new Partition(1);
+Partition predict_tr = new Partition(2);
+Partition testPart = new Partition(3);
 
 def trainDir = '../../data/thca/train/braf/';
 
@@ -166,7 +171,7 @@ InserterUtils.loadDelimitedDataTruth(insert, trainDir+influences.getName()+".txt
 //////////////////////////// weight learning ///////////////////////////
 println "\t\tLEARNING WEIGHTS...";
 
-Database trainDB = data.getDatabase(trainPart, [gene, goCC, goBP, prot2protCOR, expr2exprCOR,  expr2protCOR, prot2exprCOR] as Set);
+Database trainDB = data.getDatabase(predict_tr, [gene, goCC, goBP, prot2protCOR, expr2exprCOR,  expr2protCOR, prot2exprCOR] as Set, trainPart);
 Database truthDB = data.getDatabase(truthPart, [influences] as Set);
 
 // populate database
@@ -185,7 +190,6 @@ println m
 println "\t\tINFERRING...";
 
 def testDir = '../../data/thca/test/braf/';
-Partition testPart = new Partition(2);
 // Load static data
 for (Predicate p : [gene])
 {
