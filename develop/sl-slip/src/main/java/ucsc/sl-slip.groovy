@@ -70,6 +70,9 @@ println "\t\tDECLARING PREDICATES";
 // atom predicate 
 m.add predicate: "gene"        , types: [ArgumentType.UniqueID, ArgumentType.String]
 
+// target predicate (Closed): are these genes synthetic lethal? 
+m.add predicate: "slObserved"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
+
 // target predicate (OPEN): are these genes synthetic lethal? 
 m.add predicate: "sl"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 
@@ -115,8 +118,13 @@ m.add rule : goBP(A,B) >> sl(A,B), weight : 1
 m.add rule : goCC(A,B) >> sl(A,B), weight : 1
 m.add rule : goMF(A,B) >> sl(A,B), weight : 1
 
+
 // 'friends' also likely to be connected in network
 m.add rule : ppiConnected(A,B) >> ~sl(A,B), weight : 1
+
+
+// observed values --> also SL equivalent
+m.add rule : slObserved(A,B) >> sl(A,B), weight : 1
 
 /*
  * Let's try to add an additional set comparison rule that says similarity in the negative 
@@ -142,11 +150,8 @@ println m;
  * Set-up for weight learning and data input 
  */
 // everything we have that's been observed
-Partition readPart = new Partition(0);
-Partition writePart = new Partition(1);
-
-//Partition trainPart = new Partition(0);
-Partition truthPart = new Partition(1);
+Partition trainPart = new Partition(0);
+Partition labelsPart = new Partition(1);
 
 def dir = '../../data/test/';
 def trainDir = dir+'train'+java.io.File.separator;
@@ -155,16 +160,16 @@ def trainDir = dir+'train'+java.io.File.separator;
 for (Predicate p : [gene, ppiConnected])
 {
         println "\t\t\tREADING Ground Variable " + trainDir+p.getName()+".txt";
-	insert = data.getInserter(p, readPart)
+	insert = data.getInserter(p, trainPart)
 	InserterUtils.loadDelimitedData(insert, trainDir+p.getName()+".txt");
 }
 
 // load training 'truth' data. These should have a third column, 0-1 values
 // 
-for (Predicate p : [goCC, goMF, goBP])
+for (Predicate p : [slObserved, goCC, goMF, goBP])
 {
         println "\t\t\tREADING Training Data " + trainDir+p.getName()+".txt";
-	insert = data.getInserter(p, readPart)
+	insert = data.getInserter(p, trainPart)
 	InserterUtils.loadDelimitedDataTruth(insert, trainDir+p.getName()+".txt");
 }
 
@@ -173,7 +178,7 @@ for (Predicate p : [goCC, goMF, goBP])
 // 	truth partition are the labels
 // separate 
 println "\t\t\tLoading existing sl interactions.."
-insert = data.getInserter(slObserved, readPart)
+insert = data.getInserter(sl, labelsPart)
 InserterUtils.loadDelimitedDataTruth(insert, trainDir+sl.getName()+".txt");
 
 //////////////////////////// weight learning ///////////////////////////
@@ -190,8 +195,18 @@ println "\t\tLEARNING WEIGHTS...";
 // not a supervised task
 
 // 
-Database trainDB = data.getDatabase(writePart, [slObserved, gene, ppiConnected, goCC, goBP, goMF] as Set, readPart);
+Database trainDB = data.getDatabase(trainPart, [gene, slObserved, ppiConnected, goCC, goBP, goMF] as Set);
+Database labelsDB = data.getDatabase(labelsPart, [sl] as Set);
 
+MaxLikelihoodMPE weightLearning = new MaxLikelihoodMPE(m, trainDB, labelsDB, config);
+weightLearning.learn();
+
+trainDB.close();
+labelsDB.close();
+
+//weightLearning.close();
+
+/*
 // freezing inferences as if observations
 Database observedDB = data.getDatabase(readPart, [sl] as Set);
 
@@ -205,18 +220,19 @@ HardEM weightLearning = new HardEM(m, trainDB, observedDB, config);
 
 // this might be the right way, but one equivalent would be to create a separate RV with only 
 // inferred SL links
+
+*/
 println "\t\tLEARNING WEIGHTS DONE";
 
 println m
 
 /////////////////////////// test inference //////////////////////////////////
-/*
 println "\t\tINFERRING...";
 
 def testDir = dir+'test'+java.io.File.separator;
 Partition testPart = new Partition(2);
 // Load static data
-for (Predicate p : [gene, sl, ppiConnected])
+for (Predicate p : [gene, ppiConnected])
 {
         println "\t\t\tREADING Ground Variable " + testDir+p.getName()+".txt";
 	insert = data.getInserter(p, testPart)
@@ -225,7 +241,7 @@ for (Predicate p : [gene, sl, ppiConnected])
 
 // load training 'truth' data. These should have a third column, 0-1 values
 // 
-for (Predicate p : [goCC, goMF, goBP])
+for (Predicate p : [slObserved, goCC, goMF, goBP])
 {
         println "\t\t\tREADING Training Data " + testDir+p.getName()+".txt";
 	insert = data.getInserter(p, testPart)
@@ -234,8 +250,8 @@ for (Predicate p : [goCC, goMF, goBP])
 
 
 // don't close the sl interactions this time, but clamp everything else
-Database testDB = data.getDatabase(testPart, [gene, ppiConnected, goCC, goMF, goBP] as Set);
-//LazyMPEInference inference = new LazyMPEInference(m, testDB, config);
+Database testDB = data.getDatabase(testPart, [gene, slObserved, ppiConnected, goCC, goMF, goBP] as Set);
+MPEInference inference = new MPEInference(m, testDB, config);
 inference.mpeInference();
 inference.close();
 
