@@ -103,12 +103,16 @@ m.add rule : ( goCC(A,B) & expr2exprCOR(A,B)  ) >> influences(A,B), weight : 1
 m.add rule : ( goBP(A,B) & expr2exprCOR(A,B) ) >> influences(A,B), weight : 1
 
 // test rules that predict which go category similarities are most predictive. 
-m.add rule : ( goCC(A,B) & prot2exprCOR(A,B)  ) >> influences(A,B), weight : 3
+m.add rule : ( goCC(A,B) & prot2exprCOR(A,B)  ) >> influences(A,B), weight : 1
 m.add rule : ( goBP(A,B) & prot2exprCOR(A,B) ) >> influences(A,B), weight : 1
 
+m.add rule : ( ~goCC(A,B)  ) >> ~influences(A,B), weight : 1.0
+m.add rule : ( ~goBP(A,B)  ) >> ~influences(A,B), weight : 0.1
 
-m.add rule : ( ~goCC(A,B)  ) >> ~influences(A,B), weight : 1
-m.add rule : ( ~goBP(A,B)  ) >> ~influences(A,B), weight : 1
+m.add rule : ( ~prot2exprCOR(A,B)  ) >> ~influences(A,B), weight : 1
+m.add rule : ( ~prot2protCOR(A,B)  ) >> ~influences(A,B), weight : 1
+m.add rule : ( ~expr2exprCOR(A,B)  ) >> ~influences(A,B), weight : 1
+m.add rule : ( ~expr2protCOR(A,B)  ) >> ~influences(A,B), weight : 1
 
 // 'friends' also likely to be connected in network
 // encode a function to make this [0,1] where directly connected things are 1
@@ -125,7 +129,7 @@ m.add PredicateConstraint.Symmetric, on : prot2protCOR
 /*
  * Finally, we define a prior on the inference predicate sl. 
  */
-m.add rule: ~influences(A,B), weight: 0.01
+m.add rule: ~influences(A,B), weight: 1
 
 /*
  * Let's see what our model looks like.

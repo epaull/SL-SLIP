@@ -172,7 +172,7 @@ def printCorr(fh, vals, map, idx):
 name2id, edges = parseNet(opts.network)
 
 # make a digraph
-graph = nx.DiGraph()
+graph = nx.Graph()
 graph.add_edges_from( edges )
 length = nx.all_pairs_shortest_path_length(graph)
 spls = {}
@@ -180,14 +180,15 @@ for geneA in name2id:
 	for geneB in name2id:
 		if geneA == geneB:
 			continue
-		elif (geneB, geneA) in spls:
+		# don't duplicate
+		if (geneB, geneA) in spls:
 			continue
 		if geneA not in length or geneB not in length[geneA]:
 			spls[(geneA, geneB)] = "0"
 		else:
 			l = length[geneA][geneB]	
-			# convert, 0-1 range
-			l = 1/float(l)
+			# convert, 0-1 range, biased towards the top
+			l = 1/math.sqrt(float(l))
 			spls[(geneA, geneB)] = l
 
 
