@@ -18,6 +18,8 @@ package src.main.ucsc;
 
 import edu.umd.cs.psl.application.inference.MPEInference;
 import edu.umd.cs.psl.application.learning.weight.maxlikelihood.MaxLikelihoodMPE;
+import edu.umd.cs.psl.application.inference.LazyMPEInference;
+import edu.umd.cs.psl.application.learning.weight.maxlikelihood.LazyMaxLikelihoodMPE;
 import edu.umd.cs.psl.config.*
 import edu.umd.cs.psl.database.DataStore
 import edu.umd.cs.psl.database.Database;
@@ -134,6 +136,11 @@ m.add rule : slObserved(A,B) >> sl(A,B), weight : 1
 
 // don't need to switch data columns, this will populate the DB
 m.add PredicateConstraint.Symmetric, on : sl
+m.add PredicateConstraint.Symmetric, on : slObserved
+m.add PredicateConstraint.Symmetric, on : goCC
+m.add PredicateConstraint.Symmetric, on : goBP
+m.add PredicateConstraint.Symmetric, on : goMF
+m.add PredicateConstraint.Symmetric, on : ppiConnected
 
 /*
  * Finally, we define a prior on the inference predicate sl. 
@@ -198,7 +205,12 @@ println "\t\tLEARNING WEIGHTS...";
 Database trainDB = data.getDatabase(trainPart, [gene, slObserved, ppiConnected, goCC, goBP, goMF] as Set);
 Database labelsDB = data.getDatabase(labelsPart, [sl] as Set);
 
-MaxLikelihoodMPE weightLearning = new MaxLikelihoodMPE(m, trainDB, labelsDB, config);
+// populate database
+// use this for MaxLikelihood learning (non-lazy) once it's working
+//DatabasePopulator dbPop = new DatabasePopulator(trainDB);
+//dbPop.populateFromDB(labelsDB, sl);
+
+LazyMaxLikelihoodMPE weightLearning = new LazyMaxLikelihoodMPE(m, trainDB, labelsDB, config);
 weightLearning.learn();
 
 trainDB.close();
@@ -251,7 +263,7 @@ for (Predicate p : [slObserved, goCC, goMF, goBP])
 
 // don't close the sl interactions this time, but clamp everything else
 Database testDB = data.getDatabase(testPart, [gene, slObserved, ppiConnected, goCC, goMF, goBP] as Set);
-MPEInference inference = new MPEInference(m, testDB, config);
+LazyMPEInference inference = new LazyMPEInference(m, testDB, config);
 inference.mpeInference();
 inference.close();
 
