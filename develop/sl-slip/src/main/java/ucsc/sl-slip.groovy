@@ -214,7 +214,7 @@ MaxLikelihoodMPE weightLearning = new MaxLikelihoodMPE(m, trainDB, labelsDB, con
 weightLearning.learn();
 
 trainDB.close();
-labelsDB.close();
+//labelsDB.close();
 
 //weightLearning.close();
 
@@ -264,6 +264,11 @@ for (Predicate p : [slObserved, goCC, goMF, goBP])
 // don't close the sl interactions this time, but clamp everything else
 Database testDB = data.getDatabase(testPart, [gene, slObserved, ppiConnected, goCC, goMF, goBP] as Set);
 MPEInference inference = new MPEInference(m, testDB, config);
+
+// just populate the random variables
+DatabasePopulator dbPop2 = new DatabasePopulator(testDB);
+dbPop2.populateFromDB(labelsDB, sl);
+
 inference.mpeInference();
 inference.close();
 

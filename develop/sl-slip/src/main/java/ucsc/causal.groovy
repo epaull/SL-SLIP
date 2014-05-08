@@ -177,10 +177,10 @@ Database truthDB = data.getDatabase(truthPart, [influences] as Set);
 
 // populate database
 // use this for MaxLikelihood learning (non-lazy) once it's working
-//DatabasePopulator dbPop = new DatabasePopulator(trainDB);
-//dbPop.populateFromDB(truthDB, influences);
+DatabasePopulator dbPop = new DatabasePopulator(trainDB);
+dbPop.populateFromDB(truthDB, influences);
 
-LazyMaxLikelihoodMPE weightLearning = new LazyMaxLikelihoodMPE(m, trainDB, truthDB, config);
+MaxLikelihoodMPE weightLearning = new MaxLikelihoodMPE(m, trainDB, truthDB, config);
 weightLearning.learn();
 weightLearning.close();
 
@@ -212,7 +212,13 @@ for (Predicate p : [goCC, goBP, prot2protCOR, expr2exprCOR, expr2protCOR, prot2e
 
 // don't close the sl interactions this time, but clamp everything else except for 'influences'
 Database testDB = data.getDatabase(testPart, [gene, goCC, goBP, prot2protCOR, expr2exprCOR, expr2protCOR, prot2exprCOR] as Set);
-LazyMPEInference inference = new LazyMPEInference(m, testDB, config);
+
+
+DatabasePopulator dbPop2 = new DatabasePopulator(testDB);
+// not giving actual groundings
+dbPop2.populateFromDB(truthDB, influences);
+
+MPEInference inference = new MPEInference(m, testDB, config);
 inference.mpeInference();
 inference.close();
 
