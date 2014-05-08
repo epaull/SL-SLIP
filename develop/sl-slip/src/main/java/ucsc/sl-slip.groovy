@@ -100,7 +100,7 @@ m.add predicate: "ppiConnected"	, types: [ArgumentType.UniqueID, ArgumentType.Un
 // when PSL grounds these, it won't ground the symmetrical case
 // another option is to duplicate these, and add symmetry
 // Experiment: reverse columns in the dataset, try both cases
-m.add rule : ( sl(A,X) & sl(B,X) & (A - B) ) >> ~sl(A,B),  weight : 1
+m.add rule : ( sl(A,X) & sl(X,B) & (A - B) ) >> ~sl(A,B),  weight : 10
 
 
 // Require a smaller intersection of the neighborhoods
@@ -116,6 +116,7 @@ m.add rule : ( sl(A,X) & sl(B,X) & (A - B) ) >> ~sl(A,B),  weight : 1
 //m.add rule : ( sl(A,C) & sl(C,B) ) >> goCC(A,B),  weight : 1
 //m.add rule : ( sl(A,C) & sl(C,B) ) >> goMF(A,B),  weight : 1
 //m.add rule : ( sl(A,C) & sl(C,B) ) >> goBP(A,B),  weight : 1
+
 m.add rule : goBP(A,B) >> sl(A,B), weight : 1
 m.add rule : goCC(A,B) >> sl(A,B), weight : 1
 m.add rule : goMF(A,B) >> sl(A,B), weight : 1
@@ -123,7 +124,6 @@ m.add rule : goMF(A,B) >> sl(A,B), weight : 1
 
 // 'friends' also likely to be connected in network
 m.add rule : ppiConnected(A,B) >> ~sl(A,B), weight : 1
-
 
 // observed values --> also SL equivalent
 m.add rule : slObserved(A,B) >> sl(A,B), weight : 1
@@ -210,7 +210,7 @@ Database labelsDB = data.getDatabase(labelsPart, [sl] as Set);
 DatabasePopulator dbPop = new DatabasePopulator(trainDB);
 dbPop.populateFromDB(labelsDB, sl);
 
-LazyMaxLikelihoodMPE weightLearning = new LazyMaxLikelihoodMPE(m, trainDB, labelsDB, config);
+MaxLikelihoodMPE weightLearning = new MaxLikelihoodMPE(m, trainDB, labelsDB, config);
 weightLearning.learn();
 
 trainDB.close();
@@ -263,7 +263,7 @@ for (Predicate p : [slObserved, goCC, goMF, goBP])
 
 // don't close the sl interactions this time, but clamp everything else
 Database testDB = data.getDatabase(testPart, [gene, slObserved, ppiConnected, goCC, goMF, goBP] as Set);
-LazyMPEInference inference = new LazyMPEInference(m, testDB, config);
+MPEInference inference = new MPEInference(m, testDB, config);
 inference.mpeInference();
 inference.close();
 
