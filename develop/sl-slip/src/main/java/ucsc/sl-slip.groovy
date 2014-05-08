@@ -48,11 +48,11 @@ import edu.umd.cs.psl.application.learning.weight.em.HardEM;
  */
 
 ConfigManager cm = ConfigManager.getManager()
-ConfigBundle config = cm.getBundle("basic-example")
+ConfigBundle config = cm.getBundle("sl-slip")
 
 /* Uses H2 as a DataStore and stores it in a temp. directory by default */
 def defaultPath = System.getProperty("java.io.tmpdir")
-String dbpath = config.getString("dbpath", defaultPath + File.separator + "basic-example")
+String dbpath = config.getString("dbpath", defaultPath + File.separator + "sl-slip")
 println dbpath;
 DataStore data = new RDBMSDataStore(new H2DatabaseDriver(Type.Disk, dbpath, true), config)
 
@@ -207,8 +207,8 @@ Database labelsDB = data.getDatabase(labelsPart, [sl] as Set);
 
 // populate database
 // use this for MaxLikelihood learning (non-lazy) once it's working
-//DatabasePopulator dbPop = new DatabasePopulator(trainDB);
-//dbPop.populateFromDB(labelsDB, sl);
+DatabasePopulator dbPop = new DatabasePopulator(trainDB);
+dbPop.populateFromDB(labelsDB, sl);
 
 LazyMaxLikelihoodMPE weightLearning = new LazyMaxLikelihoodMPE(m, trainDB, labelsDB, config);
 weightLearning.learn();
