@@ -100,7 +100,8 @@ m.add predicate: "ppiConnected"	, types: [ArgumentType.UniqueID, ArgumentType.Un
 // when PSL grounds these, it won't ground the symmetrical case
 // another option is to duplicate these, and add symmetry
 // Experiment: reverse columns in the dataset, try both cases
-m.add rule : ( sl(A,X) & sl(X,B) & (A - B) ) >> ~sl(A,B),  weight : 10
+m.add rule : ( sl(A,X) & sl(X,B) & (A - B) ) >> ~sl(A,B),  weight : 5
+m.add rule : ( sl(A,X) & ppiConnected(X,B) & (A - B) ) >> sl(A,B),  weight : 5
 
 
 // Require a smaller intersection of the neighborhoods
@@ -126,7 +127,7 @@ m.add rule : goMF(A,B) >> sl(A,B), weight : 1
 m.add rule : ppiConnected(A,B) >> ~sl(A,B), weight : 1
 
 // observed values --> also SL equivalent
-m.add rule : slObserved(A,B) >> sl(A,B), weight : 1
+m.add rule : slObserved(A,B) >> sl(A,B), weight : 100
 
 /*
  * Let's try to add an additional set comparison rule that says similarity in the negative 

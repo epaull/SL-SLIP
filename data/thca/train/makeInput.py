@@ -129,8 +129,16 @@ def printGO(fh, vals, map, symmetric=True):
 
 		# ERASE
 		max = 1
-		if val > 0:
+		if val > 0.5:
+			val = 1.0
+		if val > 0.3:
+			val = 0.9
+		if val > 0.2:
 			val = 0.8
+		if val > 0.1:
+			val = 0.75
+		if val > 0:
+			val = 0.6
 
 		val += PSEUDO_COUNT
 
