@@ -1,3 +1,11 @@
 For a random graph, given that the average degree here is 42, and the number of nodes i s 5356, the probability
 that two random nodes are connected is 42/5356, so our CC of 0.142 is significantly more connected, yet still
 seems quite a bit less connected than biological networks.  
+
+
+Files:
+	negGraph.tab: all negative genetic interactions from SGD
+
+	goCC.tab
+	goMF.tab
+	goBP.tab	

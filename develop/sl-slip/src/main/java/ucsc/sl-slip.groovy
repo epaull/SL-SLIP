@@ -86,7 +86,7 @@ m.add predicate: "goMF"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 m.add predicate: "goBP"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 
 // physical PPI connections: a heat-diffusion kernel distance, normalized from 0 to 1
-m.add predicate: "ppiConnected"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
+m.add predicate: "ppiEdges"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 
 /* 
  * The 'Enemy of my Enemy is my Friend' Rule
@@ -101,7 +101,7 @@ m.add predicate: "ppiConnected"	, types: [ArgumentType.UniqueID, ArgumentType.Un
 // another option is to duplicate these, and add symmetry
 // Experiment: reverse columns in the dataset, try both cases
 m.add rule : ( sl(A,X) & sl(X,B) & (A - B) ) >> ~sl(A,B),  weight : 5
-m.add rule : ( sl(A,X) & ppiConnected(X,B) & (A - B) ) >> sl(A,B),  weight : 5
+m.add rule : ( sl(A,X) & ppiEdges(X,B) & (A - B) ) >> sl(A,B),  weight : 5
 
 
 // Require a smaller intersection of the neighborhoods
@@ -120,11 +120,11 @@ m.add rule : ( sl(A,X) & ppiConnected(X,B) & (A - B) ) >> sl(A,B),  weight : 5
 
 m.add rule : goBP(A,B) >> sl(A,B), weight : 1
 m.add rule : goCC(A,B) >> sl(A,B), weight : 1
-m.add rule : goMF(A,B) >> sl(A,B), weight : 1
+m.add rule : goMF(A,B) >> ~sl(A,B), weight : 1
 
 
 // 'friends' also likely to be connected in network
-m.add rule : ppiConnected(A,B) >> ~sl(A,B), weight : 1
+m.add rule : ppiEdges(A,B) >> ~sl(A,B), weight : 1
 
 // observed values --> also SL equivalent
 m.add rule : slObserved(A,B) >> sl(A,B), weight : 100
@@ -141,7 +141,7 @@ m.add PredicateConstraint.Symmetric, on : slObserved
 m.add PredicateConstraint.Symmetric, on : goCC
 m.add PredicateConstraint.Symmetric, on : goBP
 m.add PredicateConstraint.Symmetric, on : goMF
-m.add PredicateConstraint.Symmetric, on : ppiConnected
+m.add PredicateConstraint.Symmetric, on : ppiEdges
 
 /*
  * Finally, we define a prior on the inference predicate sl. 
@@ -161,11 +161,12 @@ println m;
 Partition trainPart = new Partition(0);
 Partition labelsPart = new Partition(1);
 
+//def dir = '../../data/yeast/TEST/';
 def dir = '../../data/test/';
 def trainDir = dir+'train'+java.io.File.separator;
 
 // Load static data
-for (Predicate p : [gene, ppiConnected])
+for (Predicate p : [gene, ppiEdges])
 {
         println "\t\t\tREADING Ground Variable " + trainDir+p.getName()+".txt";
 	insert = data.getInserter(p, trainPart)
@@ -203,7 +204,7 @@ println "\t\tLEARNING WEIGHTS...";
 // not a supervised task
 
 // 
-Database trainDB = data.getDatabase(trainPart, [gene, slObserved, ppiConnected, goCC, goBP, goMF] as Set);
+Database trainDB = data.getDatabase(trainPart, [gene, slObserved, ppiEdges, goCC, goBP, goMF] as Set);
 Database labelsDB = data.getDatabase(labelsPart, [sl] as Set);
 
 // populate database
@@ -211,7 +212,8 @@ Database labelsDB = data.getDatabase(labelsPart, [sl] as Set);
 DatabasePopulator dbPop = new DatabasePopulator(trainDB);
 dbPop.populateFromDB(labelsDB, sl);
 
-MaxLikelihoodMPE weightLearning = new MaxLikelihoodMPE(m, trainDB, labelsDB, config);
+//MaxLikelihoodMPE weightLearning = new MaxLikelihoodMPE(m, trainDB, labelsDB, config);
+HardEM weightLearning = new HardEM(m, trainDB, labelsDB, config);
 weightLearning.learn();
 
 trainDB.close();
@@ -245,7 +247,7 @@ println "\t\tINFERRING...";
 def testDir = dir+'test'+java.io.File.separator;
 Partition testPart = new Partition(2);
 // Load static data
-for (Predicate p : [gene, ppiConnected])
+for (Predicate p : [gene, ppiEdges])
 {
         println "\t\t\tREADING Ground Variable " + testDir+p.getName()+".txt";
 	insert = data.getInserter(p, testPart)
@@ -263,7 +265,7 @@ for (Predicate p : [slObserved, goCC, goMF, goBP])
 
 
 // don't close the sl interactions this time, but clamp everything else
-Database testDB = data.getDatabase(testPart, [gene, slObserved, ppiConnected, goCC, goMF, goBP] as Set);
+Database testDB = data.getDatabase(testPart, [gene, slObserved, ppiEdges, goCC, goMF, goBP] as Set);
 MPEInference inference = new MPEInference(m, testDB, config);
 
 // just populate the random variables
