@@ -6,6 +6,10 @@ seems quite a bit less connected than biological networks.
 Files:
 	negGraph.tab: all negative genetic interactions from SGD
 
-	goCC.tab
-	goMF.tab
-	goBP.tab	
+	goCC.tab - Resnik similarity scores for GO Cellular Component Category
+	goMF.tab - Resnik similarity scores for GO Molecular Function
+	goBP.tab - Resnik similarity scores for GO Biological Process
+
+	ppi.sgdid.tab - Protein-protein interaction edges
+	ppi.kernelEdges.tab	- kernel computed for the PPI network (thresholded edge scores)
+	gNeg.kernelEdges.tab - negative kernel (G-), thresholded edge scores

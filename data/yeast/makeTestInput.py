@@ -11,6 +11,7 @@ from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--trainFolder",dest="train",action="store",type="string",default="TEST/train/")
 parser.add_option("--testFolder",dest="test",action="store",type="string",default="TEST/test/")
+parser.add_option("--consider_only",dest="consider_only",action="store",type="string",default=None)
 (opts, args) = parser.parse_args()
 
 
@@ -36,7 +37,7 @@ def parseVals(file, network_nodes=None):
 def parseNet(file):
 
 	genes = set()
-	edges = set()
+	edges = {}
 	fh = None
 	try:
 		fh = open(file, 'r')
@@ -52,7 +53,7 @@ def parseNet(file):
 
 		genes.add( geneA )
 		genes.add( geneB )
-		edges.add( (geneA, geneB) )
+		edges[ (geneA, geneB) ] = "1.0"
 
 
 	map = {}
@@ -63,9 +64,12 @@ def parseNet(file):
 	
 	return (map, edges)
 
-def printGO(fh, vals, map, symmetric=False):
+def printGO(fh, vals, map, consider, symmetric=False):
 
 	for (geneA, geneB, val) in vals:
+
+		if (geneA, geneB) not in consider or (geneB, geneA) not in consider:
+			continue
 
 		if geneA not in map or geneB not in map:
 			continue
@@ -80,10 +84,13 @@ def printGO(fh, vals, map, symmetric=False):
 
 	fh.close()	
 
-def printNetWeight(fh, edges, map, symmetric=True):
+def printNetWeight(fh, edges, map, consider, symmetric=True):
 
 	for (geneA, geneB) in edges:
 
+		if (geneA, geneB) not in consider or (geneB, geneA) not in consider:
+			continue
+ 
 		if geneA not in map or geneB not in map:
 			continue
 		
@@ -98,9 +105,12 @@ def printNetWeight(fh, edges, map, symmetric=True):
 
 	fh.close()	
 
-def printNet(fh, edges, map, symmetric=True):
+def printNet(fh, edges, map, consider, symmetric=True):
 
 	for (geneA, geneB) in edges:
+		
+		if (geneA, geneB) not in consider or (geneB, geneA) not in consider:
+			continue
 
 		if geneA not in map or geneB not in map:
 			continue
@@ -108,10 +118,12 @@ def printNet(fh, edges, map, symmetric=True):
 		if geneA == geneB:
 			continue
 
-		fh.write("\t".join( [map[geneA], map[geneB]] )+"\n")
+		val = edges[(geneA, geneB)]
+
+		fh.write("\t".join( [map[geneA], map[geneB], val] )+"\n")
 		# print the symmetric case
 		if symmetric:
-			fh.write("\t".join( [map[geneB], map[geneA]] )+"\n")
+			fh.write("\t".join( [map[geneB], map[geneA], val] )+"\n")
 
 	fh.close()	
 
@@ -131,6 +143,17 @@ def naiveDataSplit(edges, train_fraction):
 
 	return (training_set, test_set)
 
+def addPriors(edges, categories):
+
+	PRIOR = "0.1"
+	plus_priors = edges
+	for c in categories:
+		for (a, b, v) in c:
+			plus_priors[(a,b)] = PRIOR
+
+	return plus_priors
+			
+
 # get mappings, name to id
 name2id, edges = parseNet("negGraph.tab")
 
@@ -141,6 +164,27 @@ goMF = parseVals("goMF.tab")
 # parse PPI
 ppiN2ID, ppiEdges = parseNet("ppi.sgdid.tab")
 
+# parse PPI Kernel
+ppiKernel = parseVals("ppi.kernelEdges.tab")
+
+# parse SGD Negative Kernel
+gnegKernel = parseVals("gNeg.kernelEdges.tab")
+
+# split to train/test on the target 
+slTrain, slTest = naiveDataSplit(edges, 0.9)
+# slTEST needs to include all observed edges, plus the held-out set
+# as well as prior values for any edge that has enough evidence to 
+# have a grounded rule for it (otherwise we'll get a runtime exception)
+slTest = edges
+# add in any that are just in one of these categories
+slTest = addPriors(slTest, [goBP, goCC, goMF, ppiKernel, gnegKernel])	
+
+
+# subset the data to look at just these edges
+if args.consider_only:
+	consider_edges = parseNet(args.consider_only)
+
+
 out = opts.train
 fh = open(out+'gene.txt', 'w')
 for name in name2id:
@@ -148,21 +192,24 @@ for name in name2id:
 fh.close()
 
 fh = open(out+'goBP.txt', 'w')
-printGO(fh, goBP, name2id)
+printGO(fh, goBP, name2id, consider_edges)
 fh = open(out+'goCC.txt', 'w')
-printGO(fh, goCC, name2id)
+printGO(fh, goCC, name2id, consider_edges)
 fh = open(out+'goMF.txt', 'w')
-printGO(fh, goCC, name2id)
+printGO(fh, goCC, name2id, consider_edges)
 
 fh = open(out+'ppiEdges.txt', 'w')
-printNet(fh, ppiEdges , name2id)
-
-# split to train/test
-slTrain, slTest = naiveDataSplit(edges, 0.9)
+printNet(fh, ppiEdges , name2id, consider_edges)
 
 fh = open(out+'slObserved.txt', 'w')
-printNetWeight(fh, slTrain , name2id)
+printNetWeight(fh, slTrain , name2id, consider_edges)
 
 fh = open(out+'sl.txt', 'w')
-printNetWeight(fh, slTest , name2id)
+printNetWeight(fh, slTest , name2id, consider_edges)
+
+fh = open(out+'ppiKernel.txt', 'w')
+printNetWeight(fh, ppiKernel , name2id, consider_edges)
+
+fh = open(out+'negKernel.txt', 'w')
+printNetWeight(fh, gnegKernel , name2id, consider_edges)
 
