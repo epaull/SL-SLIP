@@ -78,6 +78,9 @@ m.add predicate: "slObserved"	, types: [ArgumentType.UniqueID, ArgumentType.Uniq
 // target predicate (OPEN): are these genes synthetic lethal? 
 m.add predicate: "sl"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 
+// dummy variable for populating the DB
+m.add predicate: "consider"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
+
 // Additional CLOSED target predicates for grounded data
 
 // gene ontologies: distance scores normalized 0 to 1
@@ -100,8 +103,8 @@ m.add predicate: "ppiEdges"	, types: [ArgumentType.UniqueID, ArgumentType.Unique
 // when PSL grounds these, it won't ground the symmetrical case
 // another option is to duplicate these, and add symmetry
 // Experiment: reverse columns in the dataset, try both cases
-m.add rule : ( sl(A,X) & sl(X,B) & (A - B) ) >> ~sl(A,B),  weight : 5
-m.add rule : ( sl(A,X) & ppiEdges(X,B) & (A - B) ) >> sl(A,B),  weight : 5
+m.add rule : ( consider(A,B) & sl(A,X) & sl(X,B) & (A - B) ) >> ~sl(A,B),  weight : 5
+m.add rule : ( consider(A,B) & sl(A,X) & ppiEdges(X,B) & (A - B) ) >> sl(A,B),  weight : 5
 
 
 // Require a smaller intersection of the neighborhoods
@@ -142,6 +145,7 @@ m.add PredicateConstraint.Symmetric, on : goCC
 m.add PredicateConstraint.Symmetric, on : goBP
 m.add PredicateConstraint.Symmetric, on : goMF
 m.add PredicateConstraint.Symmetric, on : ppiEdges
+m.add PredicateConstraint.Symmetric, on : consider
 
 /*
  * Finally, we define a prior on the inference predicate sl. 
@@ -161,12 +165,11 @@ println m;
 Partition trainPart = new Partition(0);
 Partition labelsPart = new Partition(1);
 
-//def dir = '../../data/yeast/TEST/';
-def dir = '../../data/test/';
+def dir = '../../data/yeast/TEST/';
 def trainDir = dir+'train'+java.io.File.separator;
 
 // Load static data
-for (Predicate p : [gene, ppiEdges])
+for (Predicate p : [gene, consider])
 {
         println "\t\t\tREADING Ground Variable " + trainDir+p.getName()+".txt";
 	insert = data.getInserter(p, trainPart)
@@ -175,7 +178,7 @@ for (Predicate p : [gene, ppiEdges])
 
 // load training 'truth' data. These should have a third column, 0-1 values
 // 
-for (Predicate p : [slObserved, goCC, goMF, goBP])
+for (Predicate p : [slObserved, goCC, goMF, goBP, ppiEdges])
 {
         println "\t\t\tREADING Training Data " + trainDir+p.getName()+".txt";
 	insert = data.getInserter(p, trainPart)
@@ -204,7 +207,7 @@ println "\t\tLEARNING WEIGHTS...";
 // not a supervised task
 
 // 
-Database trainDB = data.getDatabase(trainPart, [gene, slObserved, ppiEdges, goCC, goBP, goMF] as Set);
+Database trainDB = data.getDatabase(trainPart, [gene, consider, slObserved, ppiEdges, goCC, goBP, goMF] as Set);
 Database labelsDB = data.getDatabase(labelsPart, [sl] as Set);
 
 // populate database
@@ -212,8 +215,8 @@ Database labelsDB = data.getDatabase(labelsPart, [sl] as Set);
 DatabasePopulator dbPop = new DatabasePopulator(trainDB);
 dbPop.populateFromDB(labelsDB, sl);
 
-//MaxLikelihoodMPE weightLearning = new MaxLikelihoodMPE(m, trainDB, labelsDB, config);
-HardEM weightLearning = new HardEM(m, trainDB, labelsDB, config);
+MaxLikelihoodMPE weightLearning = new MaxLikelihoodMPE(m, trainDB, labelsDB, config);
+//HardEM weightLearning = new HardEM(m, trainDB, labelsDB, config);
 weightLearning.learn();
 
 trainDB.close();
@@ -247,7 +250,7 @@ println "\t\tINFERRING...";
 def testDir = dir+'test'+java.io.File.separator;
 Partition testPart = new Partition(2);
 // Load static data
-for (Predicate p : [gene, ppiEdges])
+for (Predicate p : [gene, consider])
 {
         println "\t\t\tREADING Ground Variable " + testDir+p.getName()+".txt";
 	insert = data.getInserter(p, testPart)
@@ -256,7 +259,7 @@ for (Predicate p : [gene, ppiEdges])
 
 // load training 'truth' data. These should have a third column, 0-1 values
 // 
-for (Predicate p : [slObserved, goCC, goMF, goBP])
+for (Predicate p : [slObserved, goCC, goMF, goBP, ppiEdges])
 {
         println "\t\t\tREADING Training Data " + testDir+p.getName()+".txt";
 	insert = data.getInserter(p, testPart)

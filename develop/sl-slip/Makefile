@@ -1,4 +1,7 @@
 
+toy:
+	java -cp ./target/classes:`cat classpath.out` src.main.ucsc.sl-slip-freeze1
+
 run:
 	java -cp ./target/classes:`cat classpath.out` src.main.ucsc.sl-slip
 

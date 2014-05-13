@@ -11,9 +11,26 @@ from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--trainFolder",dest="train",action="store",type="string",default="TEST/train/")
 parser.add_option("--testFolder",dest="test",action="store",type="string",default="TEST/test/")
-parser.add_option("--consider_only",dest="consider_only",action="store",type="string",default=None)
+parser.add_option("--subset",dest="subset",action="store",type="string",default=None)
 (opts, args) = parser.parse_args()
 
+def parseLST(file):
+	
+	vals = set()
+	fh = None
+	try:
+		fh = open(file, 'r')
+	except:
+		raise Exception("Error: can't open file: "+file)
+
+	lineno = 1
+	for line in fh:
+		vals.add( line.rstrip() )
+
+		lineno += 1
+
+	fh.close()
+	return vals
 
 def parseVals(file, network_nodes=None):
 	
@@ -64,11 +81,11 @@ def parseNet(file):
 	
 	return (map, edges)
 
-def printGO(fh, vals, map, consider, symmetric=False):
+def printGO(fh, vals, map, consider=None, symmetric=False):
 
 	for (geneA, geneB, val) in vals:
 
-		if (geneA, geneB) not in consider or (geneB, geneA) not in consider:
+		if consider and (geneA not in consider or geneB not in consider):
 			continue
 
 		if geneA not in map or geneB not in map:
@@ -84,32 +101,11 @@ def printGO(fh, vals, map, consider, symmetric=False):
 
 	fh.close()	
 
-def printNetWeight(fh, edges, map, consider, symmetric=True):
-
-	for (geneA, geneB) in edges:
-
-		if (geneA, geneB) not in consider or (geneB, geneA) not in consider:
-			continue
- 
-		if geneA not in map or geneB not in map:
-			continue
-		
-		if geneA == geneB:
-			continue
-
-
-		fh.write("\t".join( [map[geneA], map[geneB], "1.0"] )+"\n")
-		# print the symmetric case
-		if symmetric:
-			fh.write("\t".join( [map[geneB], map[geneA], "1.0"] )+"\n")
-
-	fh.close()	
-
-def printNet(fh, edges, map, consider, symmetric=True):
+def printNet(fh, edges, map, consider=None, symmetric=True):
 
 	for (geneA, geneB) in edges:
 		
-		if (geneA, geneB) not in consider or (geneB, geneA) not in consider:
+		if consider and (geneA not in consider or geneB not in consider):
 			continue
 
 		if geneA not in map or geneB not in map:
@@ -132,13 +128,13 @@ def naiveDataSplit(edges, train_fraction):
 	sample_size = int(len(edges) * train_fraction)
 	edge_l = list(edges)
 	train_indexes = random.sample(range(0, len(edge_l)), sample_size)
-	training_set = []
-	test_set = []
+	training_set = {}
+	test_set = {}
 	for i in range(0, len(edge_l)):
 		if i in train_indexes:
-			training_set.append(edge_l[i])
+			training_set[edge_l[i]] = "1.0"
 		else:
-			test_set.append(edge_l[i])
+			test_set[edge_l[i]] = "1.0"
 
 
 	return (training_set, test_set)
@@ -149,10 +145,63 @@ def addPriors(edges, categories):
 	plus_priors = edges
 	for c in categories:
 		for (a, b, v) in c:
-			plus_priors[(a,b)] = PRIOR
+			if (a,b) not in plus_priors and (b,a) not in plus_priors:
+				plus_priors[(a,b)] = PRIOR
 
 	return plus_priors
-			
+
+def printBlocked(fh, slEdges, ppiEdges, consider):
+
+	blocked = set()
+	for (A, B) in slEdges:
+
+		if consider and (A not in consider or B not in consider):
+			continue
+
+		for (a, b) in slEdges:
+		
+			if consider and (a not in consider or a not in consider):
+				continue
+
+			c1 = (A,b)
+			c4 = (b,A)
+			c2 = (a,B)
+			c3 = (B,a)
+
+			for c in [c1,c2,c3,c4]:
+				if c not in slEdges:
+					blocked.add( c )
+					fh.write("\t".join( [c[0], c[1]] )+"\n")
+
+
+	for (A, B) in slEdges:
+
+		if consider and (A not in consider or B not in consider):
+			continue
+
+		for (a, b) in ppiEdges:
+
+			if consider and (a not in consider or b not in consider):
+				continue
+
+			c1 = (A,b)
+			c4 = (b,A)
+			c2 = (a,B)
+			c3 = (B,a)
+
+			for c in [c1,c2,c3,c4]:
+				if c not in slEdges:
+					if c in blocked:
+						continue
+					fh.write("\t".join( [c[0], c[1]] )+"\n")
+
+			fh.close()						
+
+# subset the data to look at just these edges
+consider_nodes = None
+if opts.subset:
+	consider_nodes = parseLST(opts.subset)
+
 
 # get mappings, name to id
 name2id, edges = parseNet("negGraph.tab")
@@ -177,13 +226,7 @@ slTrain, slTest = naiveDataSplit(edges, 0.9)
 # have a grounded rule for it (otherwise we'll get a runtime exception)
 slTest = edges
 # add in any that are just in one of these categories
-slTest = addPriors(slTest, [goBP, goCC, goMF, ppiKernel, gnegKernel])	
-
-
-# subset the data to look at just these edges
-if args.consider_only:
-	consider_edges = parseNet(args.consider_only)
-
+slTest = addPriors(slTest, [goBP, goCC, goMF, ppiKernel, gnegKernel])
 
 out = opts.train
 fh = open(out+'gene.txt', 'w')
@@ -192,24 +235,60 @@ for name in name2id:
 fh.close()
 
 fh = open(out+'goBP.txt', 'w')
-printGO(fh, goBP, name2id, consider_edges)
+printGO(fh, goBP, name2id, consider_nodes)
+
 fh = open(out+'goCC.txt', 'w')
-printGO(fh, goCC, name2id, consider_edges)
+printGO(fh, goCC, name2id, consider_nodes)
 fh = open(out+'goMF.txt', 'w')
-printGO(fh, goCC, name2id, consider_edges)
+printGO(fh, goCC, name2id, consider_nodes)
 
 fh = open(out+'ppiEdges.txt', 'w')
-printNet(fh, ppiEdges , name2id, consider_edges)
+printNet(fh, ppiEdges , name2id, consider_nodes)
 
 fh = open(out+'slObserved.txt', 'w')
-printNetWeight(fh, slTrain , name2id, consider_edges)
+printNet(fh, slTrain , name2id, consider_nodes)
 
 fh = open(out+'sl.txt', 'w')
-printNetWeight(fh, slTest , name2id, consider_edges)
+printNet(fh, slTest , name2id, consider_nodes)
 
 fh = open(out+'ppiKernel.txt', 'w')
-printNetWeight(fh, ppiKernel , name2id, consider_edges)
+printGO(fh, ppiKernel, name2id, consider_nodes)
 
 fh = open(out+'negKernel.txt', 'w')
-printNetWeight(fh, gnegKernel , name2id, consider_edges)
+printGO(fh, gnegKernel , name2id, consider_nodes)
+
+# print out any pairs associated
+#fh = open(out+'blocked.txt', 'w')
+#printBlocked(fh, slTest, ppiKernel, consider_nodes)
+
+out = opts.test
+fh = open(out+'gene.txt', 'w')
+for name in name2id:
+	fh.write(name2id[name]+"\t"+name+"\n")
+fh.close()
+
+fh = open(out+'goBP.txt', 'w')
+printGO(fh, goBP, name2id, consider_nodes)
+
+fh = open(out+'goCC.txt', 'w')
+printGO(fh, goCC, name2id, consider_nodes)
+fh = open(out+'goMF.txt', 'w')
+printGO(fh, goCC, name2id, consider_nodes)
+
+fh = open(out+'ppiEdges.txt', 'w')
+printNet(fh, ppiEdges , name2id, consider_nodes)
+
+# add all the data for testing here, to infer new edges
+fh = open(out+'slObserved.txt', 'w')
+printNet(fh, slTest, name2id, consider_nodes)
+
+fh = open(out+'ppiKernel.txt', 'w')
+printGO(fh, ppiKernel, name2id, consider_nodes)
+
+fh = open(out+'negKernel.txt', 'w')
+printGO(fh, gnegKernel , name2id, consider_nodes)
+
+# print out any pairs associated
+#fh = open(out+'blocked.txt', 'w')
+#printBlocked(fh, slTest, ppiKernel, consider_nodes)
 
