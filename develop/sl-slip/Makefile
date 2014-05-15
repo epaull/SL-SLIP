@@ -1,9 +1,12 @@
 
-run:
-	java -cp ./target/classes:`cat classpath.out` src.main.ucsc.sl-slip
+laptop-run:
+	java -cp ./target/classes:`cat classpath.EvansLaptop.out` src.main.ucsc.sl-slip
 
-causal:
-	java -cp ./target/classes:`cat classpath.out` src.main.ucsc.causal
+k-run:
+	java -cp ./target/classes:`cat classpath.Kolossus.out` src.main.ucsc.sl-slip
 
-compile:
+laptop-causal:
+	java -cp ./target/classes:`cat classpath.EvansLaptop.out` src.main.ucsc.causal
+
+laptop-compile:
 	mvn compile
