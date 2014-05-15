@@ -125,9 +125,10 @@ m.add rule : ( consider(A,B) & sl(A,X) & ppiEdges(X,B) & (A - B) ) >> sl(A,B),  
 //m.add rule : ( sl(A,C) & sl(C,B) ) >> goMF(A,B),  weight : 1
 //m.add rule : ( sl(A,C) & sl(C,B) ) >> goBP(A,B),  weight : 1
 
-m.add rule : goBP(A,B) >> sl(A,B), weight : 3
-m.add rule : goCC(A,B) >> sl(A,B), weight : 3
-m.add rule : goMF(A,B) >> sl(A,B), weight : 3
+m.add rule : ( goBP(A,B) & ~goMF(A,B) & (A-B) ) >> sl(A,B), weight : 3
+m.add rule : ( goBP(A,B) & (A-B) ) >> sl(A,B), weight : 3
+m.add rule : ( goCC(A,B) & (A-B) ) >> sl(A,B), weight : 3
+m.add rule : ( goMF(A,B) & (A-B) ) >> sl(A,B), weight : 3
 
 // SL means generally not connected in the PPI net
 m.add rule : ppiKernel(A,B) >> ~sl(A,B), weight : 5
