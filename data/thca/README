@@ -1,0 +1,11 @@
+the project is here:
+	~/Documents/Evan-s-Bioinformatics/Signatures/THCA/
+
+	- correlation scores across all pairings of genes
+		-BRAF mutants :braf.influence.txt
+		-RAS mutants :ras.influence.txt
+
+	- Path length from each mutation
+
+
+
