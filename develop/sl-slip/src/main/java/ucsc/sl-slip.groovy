@@ -1,4 +1,13 @@
 /*
+ * SL-SLIP (Soft Logic - Synthetic Lethal Interacting Pairs)
+ * This software package is designed to predict gene pairs that have 
+ * synthetic lethal (SL) or synthetic sick (SS) interactions. It is built 
+ * on top of the Proablistic Soft Logic (PSL) framework that allows for collective
+ * inference of the joint graph-identification problem posed by this task. 
+ *   
+ * Template code from the PSL project was used to write this software: the
+ * copyright and license for that code is below.
+ *
  * This file is part of the Psl software.
  * Copyright 2011-2013 University of Maryland
  *
@@ -63,13 +72,7 @@ DataStore data = new RDBMSDataStore(new H2DatabaseDriver(Type.Disk, dbpath, true
  */
 PSLModel m = new PSLModel(this, data)
 
-/* 
- * We create three predicates in the model, giving their names and list of argument types
- */
-////////////////////////// predicate declaration ////////////////////////
-println "\t\tDECLARING PREDICATES";
-
-// atom predicate 
+// The single atom/node for this project
 m.add predicate: "gene"        , types: [ArgumentType.UniqueID, ArgumentType.String]
 
 // target predicate (Closed): are these genes synthetic lethal? 
@@ -78,53 +81,35 @@ m.add predicate: "slObserved"	, types: [ArgumentType.UniqueID, ArgumentType.Uniq
 // target predicate (OPEN): are these genes synthetic lethal? 
 m.add predicate: "sl"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 
-// dummy variable for populating the DB
+// dummy variable for populating the DB: this must include the same set of pairs as 'sl'
 m.add predicate: "consider"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 
-// Additional CLOSED target predicates for grounded data
+// Additional CLOSED target predicates for grounded data:
 
 // gene ontologies: distance scores normalized 0 to 1
 m.add predicate: "goCC"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 m.add predicate: "goMF"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 m.add predicate: "goBP"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
-m.add predicate: "goBP"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 
+// direct connections in the PPI net
 m.add predicate: "ppiEdges"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 
 // KERNEL arguments
 m.add predicate: "ppiKernel"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
+// G- SL kernel from Qi/Bader 2008
 m.add predicate: "negKernel"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 
 /* 
  * The 'Enemy of my Enemy is my Friend' Rule
  * This is the key network related rule: if two genes are connected by 2 hops in the sl network, they cannot be
  * sl (i.e directly connected). This could also be called the 'no triangles' rule...
- *
+ * 
 */
-
-// this doesn't seem to work: we need a set comparison: make sure these are different rules
-// is ^ symmetry or not equal?
-// when PSL grounds these, it won't ground the symmetrical case
-// another option is to duplicate these, and add symmetry
-// Experiment: reverse columns in the dataset, try both cases
 m.add rule : ( consider(A,B) & sl(A,X) & sl(X,B) & (A - B) ) >> ~sl(A,B),  weight : 1
+// this is the 2-hop SL-PPI rule
 m.add rule : ( consider(A,B) & sl(A,X) & ppiEdges(X,B) & (A - B) ) >> sl(A,B),  weight : 5
 
-
-// Require a smaller intersection of the neighborhoods
-// could use GO predicates for neighbors, but not for SL
-// non-convex because the denominator of the Jaccard is changing. Sort of an alternating
-// update rule, where we freeze the Jaccard might work. 
-//m.add setcomparison: "mutuallyExclusive" , using: SetComparison.Equality, on : sl
-//m.add rule :  mutuallyExclusive( {A.sl + A.sl(inv) } , {B.sl + B.sl(inv) } ) >> sl(A,B) , weight : 3
-
-/*
- * Now we relate this to ontologies: these should be initialized by a correlation analysis of the data
- */
-//m.add rule : ( sl(A,C) & sl(C,B) ) >> goCC(A,B),  weight : 1
-//m.add rule : ( sl(A,C) & sl(C,B) ) >> goMF(A,B),  weight : 1
-//m.add rule : ( sl(A,C) & sl(C,B) ) >> goBP(A,B),  weight : 1
-
+// simple hypotheses for Gene Ontology interactions: we might need to update the prior weights here
 m.add rule : ( goBP(A,B) & ~goMF(A,B) & (A-B) ) >> sl(A,B), weight : 3
 m.add rule : ( goBP(A,B) & (A-B) ) >> sl(A,B), weight : 3
 m.add rule : ( goCC(A,B) & (A-B) ) >> sl(A,B), weight : 3
@@ -138,22 +123,19 @@ m.add rule : negKernel(A,B) >> sl(A,B), weight : 5
 // 'friends' also likely to be connected in network
 m.add rule : ppiEdges(A,B) >> ~sl(A,B), weight : 3
 
-// observed values --> also SL equivalent
+// observed values --> also SL equivalent: this weight needs to be high
+// enough to 'lock down' the sl predicate when an edge is observed
 m.add rule : slObserved(A,B) >> sl(A,B), weight : 100
 
-/*
- * Let's try to add an additional set comparison rule that says similarity in the negative 
- * m.add setcomparison: "connectedsl" , using: SetComparison.Equality, on : sl
- *m.add rule :  ( ~sl(A,B) >> connectedsl( {A.knows + A.knows(inv) } , {B.knows + B.knows(inv) } ) , weight : 3.2
-*/
-
-// don't need to switch data columns, this will populate the DB
+// all the predicates are symmetric!
 m.add PredicateConstraint.Symmetric, on : sl
 m.add PredicateConstraint.Symmetric, on : slObserved
 m.add PredicateConstraint.Symmetric, on : goCC
 m.add PredicateConstraint.Symmetric, on : goBP
 m.add PredicateConstraint.Symmetric, on : goMF
 m.add PredicateConstraint.Symmetric, on : ppiEdges
+m.add PredicateConstraint.Symmetric, on : ppiKernel
+m.add PredicateConstraint.Symmetric, on : negKernel
 m.add PredicateConstraint.Symmetric, on : consider
 
 /*
@@ -224,31 +206,14 @@ Database labelsDB = data.getDatabase(labelsPart, [sl] as Set);
 DatabasePopulator dbPop = new DatabasePopulator(trainDB);
 dbPop.populateFromDB(labelsDB, sl);
 
-//MaxLikelihoodMPE weightLearning = new MaxLikelihoodMPE(m, trainDB, labelsDB, config);
-HardEM weightLearning = new HardEM(m, trainDB, labelsDB, config);
+MaxLikelihoodMPE weightLearning = new MaxLikelihoodMPE(m, trainDB, labelsDB, config);
+//HardEM weightLearning = new HardEM(m, trainDB, labelsDB, config);
 weightLearning.learn();
 
 trainDB.close();
 //labelsDB.close();
-
 //weightLearning.close();
 
-/*
-// freezing inferences as if observations
-Database observedDB = data.getDatabase(readPart, [sl] as Set);
-
-// only works because goXX has all pairs
-DatabasePopulator dbPop = new DatabasePopulator(trainDB);
-// this is looking at goCC, every possible ground atom it has, and take all these pairings. 
-dbPop.populateFromDB(trainDB, goCC);
-
-// now run EM on trainDB: model, random variable DB, training DB and config bundle
-HardEM weightLearning = new HardEM(m, trainDB, observedDB, config);
-
-// this might be the right way, but one equivalent would be to create a separate RV with only 
-// inferred SL links
-
-*/
 println "\t\tLEARNING WEIGHTS DONE";
 
 println m
@@ -258,7 +223,7 @@ println "\t\tINFERRING...";
 
 def testDir = dir+'test'+java.io.File.separator;
 Partition testPart = new Partition(2);
-// Load static data
+// Load static data without edge weights
 for (Predicate p : [gene, consider])
 {
         println "\t\t\tREADING Ground Variable " + testDir+p.getName()+".txt";
@@ -266,7 +231,7 @@ for (Predicate p : [gene, consider])
 	InserterUtils.loadDelimitedData(insert, testDir+p.getName()+".txt");
 }
 
-// load training 'truth' data. These should have a third column, 0-1 values
+// load training 'truth' data. These are closed predicates with a third column, 0-1 values
 // 
 for (Predicate p : [slObserved, goCC, goMF, goBP, ppiEdges])
 {
@@ -280,7 +245,7 @@ for (Predicate p : [slObserved, goCC, goMF, goBP, ppiEdges])
 Database testDB = data.getDatabase(testPart, [gene, slObserved, ppiEdges, goCC, goMF, goBP, ppiKernel, negKernel] as Set);
 MPEInference inference = new MPEInference(m, testDB, config);
 
-// just populate the random variables
+// initialize the random variables that will get inferred with 'sl' from the learning step
 DatabasePopulator dbPop2 = new DatabasePopulator(testDB);
 dbPop2.populateFromDB(labelsDB, sl);
 
