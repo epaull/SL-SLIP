@@ -123,6 +123,26 @@ def printNet(fh, edges, map, consider=None, symmetric=True):
 
 	fh.close()	
 
+def printEL(fh, edges, map, consider=None, symmetric=True):
+
+	for (geneA, geneB) in edges:
+		
+		if consider and (geneA not in consider or geneB not in consider):
+			continue
+
+		if geneA not in map or geneB not in map:
+			continue
+
+		if geneA == geneB:
+			continue
+
+		fh.write("\t".join( [map[geneA], map[geneB]] )+"\n")
+		# print the symmetric case
+		if symmetric:
+			fh.write("\t".join( [map[geneB], map[geneA]] )+"\n")
+
+	fh.close()	
+
 def naiveDataSplit(edges, train_fraction):
 
 	sample_size = int(len(edges) * train_fraction)
@@ -180,57 +200,8 @@ def addPriors(edges, categories):
 
 	return plus_priors
 
-def printBlocked(fh, slEdges, ppiEdges, consider):
-
-	blocked = set()
-	for (A, B) in slEdges:
-
-		if consider and (A not in consider or B not in consider):
-			continue
-
-		for (a, b) in slEdges:
-		
-			if consider and (a not in consider or a not in consider):
-				continue
-
-			c1 = (A,b)
-			c4 = (b,A)
-			c2 = (a,B)
-			c3 = (B,a)
-
-			for c in [c1,c2,c3,c4]:
-				if c not in slEdges:
-					blocked.add( c )
-					fh.write("\t".join( [c[0], c[1]] )+"\n")
-
-
-	for (A, B) in slEdges:
-
-		if consider and (A not in consider or B not in consider):
-			continue
-
-		for (a, b) in ppiEdges:
-
-			if consider and (a not in consider or b not in consider):
-				continue
-
-			c1 = (A,b)
-			c4 = (b,A)
-			c2 = (a,B)
-			c3 = (B,a)
-
-			for c in [c1,c2,c3,c4]:
-				if c not in slEdges:
-					if c in blocked:
-						continue
-					fh.write("\t".join( [c[0], c[1]] )+"\n")
-
-			fh.close()						
-
 # subset the data to look at just these edges
 consider_nodes = None
-#if opts.subset:
-#	consider_nodes = parseLST(opts.subset)
 
 
 # get mappings, name to id
@@ -281,15 +252,15 @@ printNet(fh, slTrain , name2id, consider_nodes)
 fh = open(out+'sl.txt', 'w')
 printNet(fh, slLearn , name2id, consider_nodes)
 
+# print just the nodes to consider for SL learning
+fh = open(out+'consider.txt', 'w')
+printEL(fh, slLearn , name2id, consider_nodes)
+
 fh = open(out+'ppiKernel.txt', 'w')
 printGO(fh, ppiKernel, name2id, consider_nodes)
 
 fh = open(out+'negKernel.txt', 'w')
 printGO(fh, gnegKernel , name2id, consider_nodes)
-
-# print out any pairs associated
-#fh = open(out+'blocked.txt', 'w')
-#printBlocked(fh, slTest, ppiKernel, consider_nodes)
 
 out = opts.test
 fh = open(out+'gene.txt', 'w')
@@ -321,7 +292,7 @@ printGO(fh, gnegKernel , name2id, consider_nodes)
 fh = open(out+'heldOutSL.tab', 'w')
 printNet(fh, slTest, name2id, consider_nodes)
 
-# print out any pairs associated
-#fh = open(out+'blocked.txt', 'w')
-#printBlocked(fh, slTest, ppiKernel, consider_nodes)
+# infer just these values
+fh = open(out+'consider.txt', 'w')
+printNet(fh, slTest, name2id, consider_nodes)
 
