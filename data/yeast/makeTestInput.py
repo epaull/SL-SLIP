@@ -187,6 +187,10 @@ def splitThirds(edges):
 		else:
 			test_set[edge_l[i]] = "1.0"
 
+	# now select a random set of edges between nodes in 'edges'
+	# that is of the same size as 'edges', split into thirds
+	# assigning priors to each
+
 	return (training_set, learning_set, test_set)
 
 def addPriors(edges, categories):
@@ -203,9 +207,16 @@ def addPriors(edges, categories):
 # subset the data to look at just these edges
 consider_nodes = None
 
-
 # get mappings, name to id
 name2id, edges = parseNet(opts.slgraph)
+
+g = nx.Graph()
+g.add_edges_from(edges)
+
+# if using a subset of all nodes, select a random
+# node and grow it by first-neighbors, then add
+# all inter-connections to get a maximally connected
+# subgraph centered at that node.
 
 goBP = parseVals("goBP.tab")
 goCC = parseVals("goCC.tab")
@@ -221,13 +232,7 @@ ppiKernel = parseVals("ppi.kernelEdges.tab")
 gnegKernel = parseVals("gNeg.kernelEdges.tab")
 
 # split to train/test on the target 
-#slTrain, slTest = naiveDataSplit(edges, 0.9)
 slTrain, slLearn, slTest = splitThirds(edges)
-# slTEST needs to include all observed edges, plus the held-out set
-# as well as prior values for any edge that has enough evidence to 
-# have a grounded rule for it (otherwise we'll get a runtime exception)
-# add in any that are just in one of these categories
-slLearn = addPriors(slLearn, [goBP, goCC, goMF, ppiKernel, gnegKernel])
 
 out = opts.train
 fh = open(out+'gene.txt', 'w')
@@ -236,31 +241,31 @@ for name in name2id:
 fh.close()
 
 fh = open(out+'goBP.txt', 'w')
-printGO(fh, goBP, name2id, consider_nodes)
+printGO(fh, goBP, name2id)
 
 fh = open(out+'goCC.txt', 'w')
-printGO(fh, goCC, name2id, consider_nodes)
+printGO(fh, goCC, name2id)
 fh = open(out+'goMF.txt', 'w')
-printGO(fh, goCC, name2id, consider_nodes)
+printGO(fh, goCC, name2id)
 
 fh = open(out+'ppiEdges.txt', 'w')
-printNet(fh, ppiEdges , name2id, consider_nodes)
+printNet(fh, ppiEdges , name2id)
 
 fh = open(out+'slObserved.txt', 'w')
-printNet(fh, slTrain , name2id, consider_nodes)
+printNet(fh, slTrain , name2id)
 
 fh = open(out+'sl.txt', 'w')
-printNet(fh, slLearn , name2id, consider_nodes)
+printNet(fh, slLearn , name2id)
 
 # print just the nodes to consider for SL learning
 fh = open(out+'consider.txt', 'w')
-printEL(fh, slLearn , name2id, consider_nodes)
+printEL(fh, slLearn , name2id)
 
 fh = open(out+'ppiKernel.txt', 'w')
-printGO(fh, ppiKernel, name2id, consider_nodes)
+printGO(fh, ppiKernel, name2id)
 
 fh = open(out+'negKernel.txt', 'w')
-printGO(fh, gnegKernel , name2id, consider_nodes)
+printGO(fh, gnegKernel , name2id)
 
 out = opts.test
 fh = open(out+'gene.txt', 'w')
@@ -269,30 +274,30 @@ for name in name2id:
 fh.close()
 
 fh = open(out+'goBP.txt', 'w')
-printGO(fh, goBP, name2id, consider_nodes)
+printGO(fh, goBP, name2id)
 
 fh = open(out+'goCC.txt', 'w')
-printGO(fh, goCC, name2id, consider_nodes)
+printGO(fh, goCC, name2id)
 fh = open(out+'goMF.txt', 'w')
-printGO(fh, goCC, name2id, consider_nodes)
+printGO(fh, goCC, name2id)
 
 fh = open(out+'ppiEdges.txt', 'w')
-printNet(fh, ppiEdges , name2id, consider_nodes)
+printNet(fh, ppiEdges , name2id)
 
 # add all the data for testing here, to infer new edges
 fh = open(out+'slObserved.txt', 'w')
-printNet(fh, slLearn, name2id, consider_nodes)
+printNet(fh, slLearn, name2id)
 
 fh = open(out+'ppiKernel.txt', 'w')
-printGO(fh, ppiKernel, name2id, consider_nodes)
+printGO(fh, ppiKernel, name2id)
 
 fh = open(out+'negKernel.txt', 'w')
-printGO(fh, gnegKernel , name2id, consider_nodes)
+printGO(fh, gnegKernel , name2id)
 
 fh = open(out+'heldOutSL.tab', 'w')
-printNet(fh, slTest, name2id, consider_nodes)
+printNet(fh, slTest, name2id)
 
 # infer just these values
 fh = open(out+'consider.txt', 'w')
-printNet(fh, slTest, name2id, consider_nodes)
+printNet(fh, slTest, name2id)
 
