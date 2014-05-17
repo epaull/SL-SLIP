@@ -125,7 +125,7 @@ m.add rule : ( consider(A,B) & ppiEdges(A,B) ) >> ~sl(A,B), weight : 3
 
 // observed values --> also SL equivalent: this weight needs to be high
 // enough to 'lock down' the sl predicate when an edge is observed
-m.add rule : slObserved(A,B) >> sl(A,B), weight : 100
+m.add rule : ( consider(A, B) & slObserved(A,B) ) >> sl(A,B), weight : 100
 
 // all the predicates are symmetric!
 m.add PredicateConstraint.Symmetric, on : sl
