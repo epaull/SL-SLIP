@@ -211,7 +211,7 @@ MaxLikelihoodMPE weightLearning = new MaxLikelihoodMPE(m, trainDB, labelsDB, con
 weightLearning.learn();
 
 trainDB.close();
-//labelsDB.close();
+labelsDB.close();
 //weightLearning.close();
 
 println "\t\tLEARNING WEIGHTS DONE";
@@ -240,14 +240,18 @@ for (Predicate p : [slObserved, goCC, goMF, goBP, ppiEdges])
 	InserterUtils.loadDelimitedDataTruth(insert, testDir+p.getName()+".txt");
 }
 
-
 // don't close the sl interactions this time, but clamp everything else
-Database testDB = data.getDatabase(testPart, [gene, slObserved, ppiEdges, goCC, goMF, goBP, ppiKernel, negKernel] as Set);
+Database testDB = data.getDatabase(testPart, [gene, consider, slObserved, ppiEdges, goCC, goMF, goBP, ppiKernel, negKernel] as Set);
 MPEInference inference = new MPEInference(m, testDB, config);
 
+//create dummy partition
+Partition dummyPart = new Partition(3);
+insert = data.getInserter(sl, dummyPart)
+InserterUtils.loadDelimitedDataTruth(insert, testDir+sl.getName()+".txt");
+Database dummyDB = data.getDatabase(dummyPart, [sl] as Set);
 // initialize the random variables that will get inferred with 'sl' from the learning step
 DatabasePopulator dbPop2 = new DatabasePopulator(testDB);
-dbPop2.populateFromDB(labelsDB, sl);
+dbPop2.populateFromDB(dummyDB, sl);
 
 inference.mpeInference();
 inference.close();
