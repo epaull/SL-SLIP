@@ -204,6 +204,28 @@ def addPriors(edges, categories):
 
 	return plus_priors
 
+def getSubnet(g, min_edges=100):
+
+	print "Growing a subnetwork..."
+	seed_node = random.choice(g.nodes())
+	first_neighbors = g.neighbors(seed_node)
+	first_neighbors.append(seed_node)
+
+	# add all interconnections between this set
+	h = g.subgraph(first_neighbors)
+	# grow the subnetwork until we have at least min_edges
+	while (len(h.edges()) < min_edges):
+		seed = random.choice(h.nodes())
+		nbrs = g.neighbors(seed)
+		nbrs.append(seed)
+		for n in h.nodes():
+			nbrs.append(n)
+		h = g.subgraph(nbrs)
+
+	print "Selected a random subnetwork of "+str(len(h.edges()))+" edges..."
+	return h.edges()
+
+	
 # subset the data to look at just these edges
 consider_nodes = None
 
@@ -212,6 +234,7 @@ name2id, edges = parseNet(opts.slgraph)
 
 g = nx.Graph()
 g.add_edges_from(edges)
+edge_universe = getSubnet(g)
 
 # if using a subset of all nodes, select a random
 # node and grow it by first-neighbors, then add
