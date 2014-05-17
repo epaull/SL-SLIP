@@ -81,11 +81,15 @@ def parseNet(file):
 	
 	return (map, edges)
 
-def printGO(fh, vals, map, consider=None, symmetric=False):
+def printGO(fh, vals, map, edge_universe, consider=None, symmetric=False):
 
+	done = set()
 	for (geneA, geneB, val) in vals:
+		
+		if (geneA, geneB) in done:
+			continue		
 
-		if consider and (geneA not in consider or geneB not in consider):
+		if (geneA, geneB) not in edge_universe and (geneB, geneA) not in edge_universe:
 			continue
 
 		if geneA not in map or geneB not in map:
@@ -93,6 +97,9 @@ def printGO(fh, vals, map, consider=None, symmetric=False):
 		
 		if geneA == geneB:
 			continue
+		
+		done.add( (geneA, geneB) )
+		done.add( (geneB, geneA) )
 
 		fh.write("\t".join( [map[geneA], map[geneB], val] )+"\n")
 		# print the symmetric case
@@ -101,11 +108,15 @@ def printGO(fh, vals, map, consider=None, symmetric=False):
 
 	fh.close()	
 
-def printNet(fh, edges, map, consider=None, symmetric=True):
+def printNet(fh, edges, map, edge_universe, consider=None, symmetric=True):
 
+	done = set()
 	for (geneA, geneB) in edges:
-		
-		if consider and (geneA not in consider or geneB not in consider):
+
+		if (geneA, geneB) in done:
+			continue		
+
+		if (geneA, geneB) not in edge_universe and (geneB, geneA) not in edge_universe:
 			continue
 
 		if geneA not in map or geneB not in map:
@@ -116,6 +127,9 @@ def printNet(fh, edges, map, consider=None, symmetric=True):
 
 		val = edges[(geneA, geneB)]
 
+		done.add( (geneA, geneB) )
+		done.add( (geneB, geneA) )
+
 		fh.write("\t".join( [map[geneA], map[geneB], val] )+"\n")
 		# print the symmetric case
 		if symmetric:
@@ -123,11 +137,15 @@ def printNet(fh, edges, map, consider=None, symmetric=True):
 
 	fh.close()	
 
-def printEL(fh, edges, map, consider=None, symmetric=True):
+def printEL(fh, edges, map, edge_universe, consider=None, symmetric=True):
 
+	done = set()
 	for (geneA, geneB) in edges:
-		
-		if consider and (geneA not in consider or geneB not in consider):
+	
+		if (geneA, geneB) in done:
+			continue		
+
+		if (geneA, geneB) not in edge_universe and (geneB, geneA) not in edge_universe:
 			continue
 
 		if geneA not in map or geneB not in map:
@@ -135,6 +153,9 @@ def printEL(fh, edges, map, consider=None, symmetric=True):
 
 		if geneA == geneB:
 			continue
+		
+		done.add( (geneA, geneB) )
+		done.add( (geneB, geneA) )
 
 		fh.write("\t".join( [map[geneA], map[geneB]] )+"\n")
 		# print the symmetric case
@@ -143,23 +164,17 @@ def printEL(fh, edges, map, consider=None, symmetric=True):
 
 	fh.close()	
 
-def naiveDataSplit(edges, train_fraction):
+def randomNegEdge(g):
 
-	sample_size = int(len(edges) * train_fraction)
-	edge_l = list(edges)
-	train_indexes = random.sample(range(0, len(edge_l)), sample_size)
-	training_set = {}
-	test_set = {}
-	for i in range(0, len(edge_l)):
-		if i in train_indexes:
-			training_set[edge_l[i]] = "1.0"
-		else:
-			test_set[edge_l[i]] = "1.0"
+	first_node = random.choice(g.nodes())
+	possible_nodes = set(g.nodes())
+	nbrs = g.neighbors(first_node) + [first_node]
+	possible_nodes.difference_update(nbrs) 
+	second_node = random.choice(list(possible_nodes))   
 
+	return (first_node, second_node)
 
-	return (training_set, test_set)
-
-def splitThirds(edges):
+def splitThirds(edges, g):
 	"""
 	Split into training set, learning set, and the held-out test set
 	"""
@@ -190,21 +205,19 @@ def splitThirds(edges):
 	# now select a random set of edges between nodes in 'edges'
 	# that is of the same size as 'edges', split into thirds
 	# assigning priors to each
+	for i in range(0, len(edge_l)):
+		neg_edge = randomNegEdge(g)
+		if i in train_indexes:
+			training_set[neg_edge] = "0.01"
+			learning_set[neg_edge] = "0.01"
+		elif i in learn_indexes:
+			learning_set[neg_edge] = "0.01"
+		else:
+			test_set[neg_edge] = "0.01"
 
 	return (training_set, learning_set, test_set)
 
-def addPriors(edges, categories):
-
-	PRIOR = "0.1"
-	plus_priors = edges
-	for c in categories:
-		for (a, b, v) in c:
-			if (a,b) not in plus_priors and (b,a) not in plus_priors:
-				plus_priors[(a,b)] = PRIOR
-
-	return plus_priors
-
-def getSubnet(g, min_edges=100):
+def getSubnet(g, min_edges=1000):
 
 	print "Growing a subnetwork..."
 	seed_node = random.choice(g.nodes())
@@ -223,7 +236,7 @@ def getSubnet(g, min_edges=100):
 		h = g.subgraph(nbrs)
 
 	print "Selected a random subnetwork of "+str(len(h.edges()))+" edges..."
-	return h.edges()
+	return (h.edges(), set(h.nodes()), h)
 
 	
 # subset the data to look at just these edges
@@ -234,7 +247,7 @@ name2id, edges = parseNet(opts.slgraph)
 
 g = nx.Graph()
 g.add_edges_from(edges)
-edge_universe = getSubnet(g)
+edge_universe, node_universe, h = getSubnet(g)
 
 # if using a subset of all nodes, select a random
 # node and grow it by first-neighbors, then add
@@ -255,72 +268,89 @@ ppiKernel = parseVals("ppi.kernelEdges.tab")
 gnegKernel = parseVals("gNeg.kernelEdges.tab")
 
 # split to train/test on the target 
-slTrain, slLearn, slTest = splitThirds(edges)
+slTrain, slLearn, slTest = splitThirds(edge_universe, h)
+
+edge_universe = {}
+for edge in slLearn:
+	edge_universe[edge] = 1
+for edge in slTest:
+	edge_universe[edge] = 1
+edge_universe = set(edge_universe.keys())
+
+print len(edge_universe)
 
 out = opts.train
 fh = open(out+'gene.txt', 'w')
 for name in name2id:
+
+	if name2id[name] not in node_universe:
+		continue
+		
 	fh.write(name2id[name]+"\t"+name+"\n")
 fh.close()
 
 fh = open(out+'goBP.txt', 'w')
-printGO(fh, goBP, name2id)
+printGO(fh, goBP, name2id, edge_universe)
 
 fh = open(out+'goCC.txt', 'w')
-printGO(fh, goCC, name2id)
+printGO(fh, goCC, name2id, edge_universe)
 fh = open(out+'goMF.txt', 'w')
-printGO(fh, goCC, name2id)
+printGO(fh, goCC, name2id, edge_universe)
 
 fh = open(out+'ppiEdges.txt', 'w')
-printNet(fh, ppiEdges , name2id)
+printNet(fh, ppiEdges , name2id, edge_universe)
 
 fh = open(out+'slObserved.txt', 'w')
-printNet(fh, slTrain , name2id)
+printNet(fh, slTrain , name2id, edge_universe)
 
 fh = open(out+'sl.txt', 'w')
-printNet(fh, slLearn , name2id)
+printNet(fh, slLearn, name2id, edge_universe)
 
 # print just the nodes to consider for SL learning
 fh = open(out+'consider.txt', 'w')
-printEL(fh, slLearn , name2id)
+printEL(fh, slLearn , name2id, edge_universe)
 
 fh = open(out+'ppiKernel.txt', 'w')
-printGO(fh, ppiKernel, name2id)
+printGO(fh, ppiKernel, name2id, edge_universe)
 
 fh = open(out+'negKernel.txt', 'w')
-printGO(fh, gnegKernel , name2id)
+printGO(fh, gnegKernel , name2id, edge_universe)
 
 out = opts.test
 fh = open(out+'gene.txt', 'w')
 for name in name2id:
+
+	if name2id[name] not in node_universe:
+		continue
+
 	fh.write(name2id[name]+"\t"+name+"\n")
 fh.close()
 
 fh = open(out+'goBP.txt', 'w')
-printGO(fh, goBP, name2id)
+printGO(fh, goBP, name2id, edge_universe)
 
 fh = open(out+'goCC.txt', 'w')
-printGO(fh, goCC, name2id)
+printGO(fh, goCC, name2id, edge_universe)
 fh = open(out+'goMF.txt', 'w')
-printGO(fh, goCC, name2id)
+printGO(fh, goCC, name2id, edge_universe)
 
 fh = open(out+'ppiEdges.txt', 'w')
-printNet(fh, ppiEdges , name2id)
+printNet(fh, ppiEdges , name2id, edge_universe)
 
 # add all the data for testing here, to infer new edges
 fh = open(out+'slObserved.txt', 'w')
-printNet(fh, slLearn, name2id)
+printNet(fh, slLearn, name2id, edge_universe)
 
 fh = open(out+'ppiKernel.txt', 'w')
-printGO(fh, ppiKernel, name2id)
+printGO(fh, ppiKernel, name2id, edge_universe)
 
 fh = open(out+'negKernel.txt', 'w')
-printGO(fh, gnegKernel , name2id)
+printGO(fh, gnegKernel , name2id, edge_universe)
 
 fh = open(out+'heldOutSL.tab', 'w')
-printNet(fh, slTest, name2id)
+printNet(fh, slTest, name2id, edge_universe)
 
 # infer just these values
 fh = open(out+'consider.txt', 'w')
-printNet(fh, slTest, name2id)
+printEL(fh, slTest, name2id, edge_universe)
 
