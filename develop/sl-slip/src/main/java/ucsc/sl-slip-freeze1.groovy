@@ -100,8 +100,8 @@ m.add predicate: "ppiEdges"	, types: [ArgumentType.UniqueID, ArgumentType.Unique
 // when PSL grounds these, it won't ground the symmetrical case
 // another option is to duplicate these, and add symmetry
 // Experiment: reverse columns in the dataset, try both cases
-m.add rule : ( ~blocked(A,B) & sl(A,X) & sl(X,B) & (A - B) ) >> ~sl(A,B),  weight : 5
-m.add rule : ( ~blocked(A,B) & sl(A,X) & ppiEdges(X,B) & (A - B) ) >> sl(A,B),  weight : 5
+m.add rule : ( sl(A,X) & sl(X,B) & (A - B) ) >> ~sl(A,B),  weight : 5
+m.add rule : ( sl(A,X) & ppiEdges(X,B) & (A - B) ) >> sl(A,B),  weight : 5
 
 
 // Require a smaller intersection of the neighborhoods
@@ -268,9 +268,16 @@ for (Predicate p : [slObserved, goCC, goMF, goBP])
 Database testDB = data.getDatabase(testPart, [gene, slObserved, ppiEdges, goCC, goMF, goBP] as Set);
 MPEInference inference = new MPEInference(m, testDB, config);
 
-// just populate the random variables
+
+//create dummy partition
+Partition dummyPart = new Partition(3);
+insert = data.getInserter(sl, dummyPart)
+InserterUtils.loadDelimitedDataTruth(insert, testDir+sl.getName()+".txt");
+Database dummyDB = data.getDatabase(dummyPart, [sl] as Set);
+// initialize the random variables that will get inferred with 'sl' from the learning step
 DatabasePopulator dbPop2 = new DatabasePopulator(testDB);
-dbPop2.populateFromDB(labelsDB, sl);
+dbPop2.populateFromDB(dummyDB, sl);
+
 
 inference.mpeInference();
 inference.close();

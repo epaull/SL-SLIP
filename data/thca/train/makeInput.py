@@ -94,27 +94,33 @@ def parseNet(file):
 	
 	return (map, edges)
 
-def printLengths(fh, vals, map):
+def printLengths(fh, vals, map, consider):
 
 	# linearly scale from 0-1
-	max = 0
-	for (geneA, geneB) in vals:
-		val = vals[(geneA, geneB)]
-		if abs(float(val)) > max:
-			max = abs(float(val)) + PSEUDO_COUNT
+	#max = 0
+	#for (geneA, geneB) in vals:
+	#	val = vals[(geneA, geneB)]
+	#	if abs(float(val)) > max:
+	#		max = abs(float(val)) + PSEUDO_COUNT
 
 	for (geneA, geneB) in vals:
 		val = vals[(geneA, geneB)]
+
+		if (geneA, geneB) not in consider and (geneB, geneA) not in consider:
+			continue
 
 		# add pseudo-counts
-		val = float(val)
-		val += PSEUDO_COUNT
+	#	val = float(val)
+	#	val += PSEUDO_COUNT
 
-		fh.write("\t".join( [map[geneA], map[geneB], str(abs(float(val))/max)] )+"\n")
-		fh.write("\t".join( [map[geneB], map[geneA], str(abs(float(val))/max)] )+"\n")
+		#fh.write("\t".join( [map[geneA], map[geneB], str(abs(float(val))/max)] )+"\n")
+		#fh.write("\t".join( [map[geneB], map[geneA], str(abs(float(val))/max)] )+"\n")
+
+		fh.write("\t".join( [map[geneA], map[geneB], str(abs(float(val)))] )+"\n")
+		fh.write("\t".join( [map[geneB], map[geneA], str(abs(float(val)))] )+"\n")
 
 	fh.close()	
-def printGO(fh, vals, map, symmetric=True):
+def printGO(fh, vals, map, consider, symmetric=True):
 
 	# linearly scale from 0-1
 	#max = 0
@@ -124,6 +130,8 @@ def printGO(fh, vals, map, symmetric=True):
 
 	for (geneA, geneB, val) in vals:
 
+		if (geneA, geneB) not in consider and (geneB, geneA) not in consider:
+			continue
 		# add pseudo-counts
 		val = float(val)
 
@@ -149,8 +157,11 @@ def printGO(fh, vals, map, symmetric=True):
 
 	fh.close()	
 
-def printCorr(fh, vals, map, idx):
+def printCorr(fh, vals, map, idx, consider):
 	for (geneA, geneB, val1, val2) in vals:
+
+		if (geneA, geneB) not in consider and (geneB, geneA) not in consider:
+			continue
 
 		if val1 > 0.5:
 			val1 = 0.95
@@ -196,36 +207,76 @@ for geneA in name2id:
 		else:
 			l = length[geneA][geneB]	
 			# convert, 0-1 range, biased towards the top
-			l = 1/math.sqrt(float(l))
+			#l = 1/math.sqrt(float(l))
+			if l == 1:
+				l = 0.95
+			else:
+				l = 1/float(l)
 			spls[(geneA, geneB)] = l
 
+
+train_indexes = range(0, int(len(spls)/2.0))
+test_indexes = range(int(len(spls)/2.0), len(spls))
+train_pairs = set()
+test_pairs = set()
+i = 0
+for pair in spls:
+	if i in train_indexes:
+		train_pairs.add( pair )	
+	else:
+		test_pairs.add( pair )	
+	i += 1
 
 goBP = parseVals(opts.goBP)
 goCC = parseVals(opts.goCC)
 prot2prot, expr2expr, expr2prot, prot2expr = parseCorr(opts.allpairs)
 
-out = 'braf/'
-fh = open(out+'gene.txt', 'w')
+trainDir = 'braf/'
+testDir = '../test/braf/'
+
+fh = open(trainDir+'gene.txt', 'w')
 for name in name2id:
 	fh.write(name2id[name]+"\t"+name+"\n")
 fh.close()
 
-fh = open(out+'influences.txt', 'w')
-printLengths(fh, spls, name2id)
+fh = open(testDir+'gene.txt', 'w')
+for name in name2id:
+	fh.write(name2id[name]+"\t"+name+"\n")
+fh.close()
 
-fh = open(out+'goBP.txt', 'w')
-printGO(fh, goBP, name2id)
-fh = open(out+'goCC.txt', 'w')
-printGO(fh, goCC, name2id)
+fh = open(trainDir+'influences.txt', 'w')
+printLengths(fh, spls, name2id, train_pairs)
 
-fh = open(out+'prot2protCOR.txt', 'w')
-printCorr(fh, prot2prot, name2id, 1)
-fh = open(out+'prot2exprCOR.txt', 'w')
-printCorr(fh, prot2expr, name2id, 1)
-fh = open(out+'expr2exprCOR.txt', 'w')
-printCorr(fh, expr2expr, name2id, 1)
-fh = open(out+'expr2protCOR.txt', 'w')
-printCorr(fh, expr2prot, name2id, 1)
+fh = open(testDir+'influences.txt', 'w')
+printLengths(fh, spls, name2id, test_pairs)
+
+fh = open(trainDir+'goBP.txt', 'w')
+printGO(fh, goBP, name2id, train_pairs)
+fh = open(trainDir+'goCC.txt', 'w')
+printGO(fh, goCC, name2id, train_pairs)
+
+fh = open(testDir+'goBP.txt', 'w')
+printGO(fh, goBP, name2id, test_pairs)
+fh = open(testDir+'goCC.txt', 'w')
+printGO(fh, goCC, name2id, test_pairs)
+
+fh = open(trainDir+'prot2protCOR.txt', 'w')
+printCorr(fh, prot2prot, name2id, 1, train_pairs)
+fh = open(trainDir+'prot2exprCOR.txt', 'w')
+printCorr(fh, prot2expr, name2id, 1, train_pairs)
+fh = open(trainDir+'expr2exprCOR.txt', 'w')
+printCorr(fh, expr2expr, name2id, 1, train_pairs)
+fh = open(trainDir+'expr2protCOR.txt', 'w')
+printCorr(fh, expr2prot, name2id, 1, train_pairs)
+
+fh = open(testDir+'prot2protCOR.txt', 'w')
+printCorr(fh, prot2prot, name2id, 1, test_pairs)
+fh = open(testDir+'prot2exprCOR.txt', 'w')
+printCorr(fh, prot2expr, name2id, 1, test_pairs)
+fh = open(testDir+'expr2exprCOR.txt', 'w')
+printCorr(fh, expr2expr, name2id, 1, test_pairs)
+fh = open(testDir+'expr2protCOR.txt', 'w')
+printCorr(fh, expr2prot, name2id, 1, test_pairs)
 		
 out = 'ras/'
 fh = open(out+'gene.txt', 'w')
@@ -234,19 +285,19 @@ for name in name2id:
 fh.close()
 
 fh = open(out+'influences.txt', 'w')
-printLengths(fh, spls, name2id)
+printLengths(fh, spls, name2id, train_pairs)
 
 fh = open(out+'goBP.txt', 'w')
-printGO(fh, goBP, name2id)
+printGO(fh, goBP, name2id, train_pairs)
 fh = open(out+'goCC.txt', 'w')
-printGO(fh, goCC, name2id)
+printGO(fh, goCC, name2id, train_pairs)
 
 fh = open(out+'prot2protCOR.txt', 'w')
-printCorr(fh, prot2prot, name2id, 2)
+printCorr(fh, prot2prot, name2id, 2, train_pairs)
 fh = open(out+'prot2exprCOR.txt', 'w')
-printCorr(fh, prot2expr, name2id, 2)
+printCorr(fh, prot2expr, name2id, 2, train_pairs)
 fh = open(out+'expr2exprCOR.txt', 'w')
-printCorr(fh, expr2expr, name2id, 2)
+printCorr(fh, expr2expr, name2id, 2, train_pairs)
 fh = open(out+'expr2protCOR.txt', 'w')
-printCorr(fh, expr2prot, name2id, 2)
+printCorr(fh, expr2prot, name2id, 2, train_pairs)
 		
