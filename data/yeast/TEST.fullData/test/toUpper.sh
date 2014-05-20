@@ -1,0 +1,10 @@
+mv goBP.txt GOBP.txt
+mv goCC.txt GOCC.txt
+mv goMF.txt GOMF.txt
+mv consider.txt CONSIDER.txt
+mv gene.txt GENE.txt
+mv ppiEdges.txt PPIEDGES.txt
+mv sl.txt SL.txt
+mv slObserved.txt SLOBSERVED.txt
+mv negKernel.txt NEGKERNEL.txt
+mv ppiKernel.txt PPIKERNEL.txt
