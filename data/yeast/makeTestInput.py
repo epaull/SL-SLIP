@@ -12,6 +12,7 @@ parser = OptionParser()
 parser.add_option("--trainFolder",dest="train",action="store",type="string",default="TEST/train/")
 parser.add_option("--testFolder",dest="test",action="store",type="string",default="TEST/test/")
 parser.add_option("--slgraph",dest="slgraph",action="store",type="string",default=None)
+parser.add_option("--subnet",dest="subnet",action="store_true",default=False)
 (opts, args) = parser.parse_args()
 
 def parseLST(file):
@@ -181,10 +182,11 @@ def splitThirds(edges, g):
 	sample_size = int(len(edges) * 0.33)
 	edge_l = list(edges)
 	# indexes for edge_l of training sets
-	train_indexes = random.sample(range(0, len(edge_l)), sample_size)
+	# take the first third
+	#train_indexes = random.sample(range(0, len(edge_l)), sample_size)
+	train_indexes = range(0, sample_size)
 	# all other indexes
-	other = [i for i in range(0, len(edge_l)) if i not in train_indexes]
-	learn_indexes = random.sample(other, sample_size)
+	learn_indexes = range(0, sample_size*2) 
 
 	# training set is just the slObserved used to train the initial model
 	training_set = {}
@@ -194,6 +196,9 @@ def splitThirds(edges, g):
 	# the test set is completely held out from PSL and used for evaluation only
 	test_set = {}
 	for i in range(0, len(edge_l)):
+		if i % 10000 == 0:
+			print "..."
+
 		if i in train_indexes:
 			training_set[edge_l[i]] = "1.0"
 			learning_set[edge_l[i]] = "1.0"
@@ -205,8 +210,12 @@ def splitThirds(edges, g):
 	# now select a random set of edges between nodes in 'edges'
 	# that is of the same size as 'edges', split into thirds
 	# assigning priors to each
+	print "selecting random negative training cases..."
 	for i in range(0, len(edge_l)):
 		neg_edge = randomNegEdge(g)
+		if i % 10000 == 0:
+			print "..."
+
 		if i in train_indexes:
 			training_set[neg_edge] = "0.01"
 			learning_set[neg_edge] = "0.01"
@@ -215,6 +224,7 @@ def splitThirds(edges, g):
 		else:
 			test_set[neg_edge] = "0.01"
 
+	print "done!"
 	return (training_set, learning_set, test_set)
 
 def getSubnet(g, min_edges=1000):
@@ -236,7 +246,7 @@ def getSubnet(g, min_edges=1000):
 		h = g.subgraph(nbrs)
 
 	print "Selected a random subnetwork of "+str(len(h.edges()))+" edges..."
-	return (h.edges(), set(h.nodes()), h)
+	return h
 
 	
 # subset the data to look at just these edges
@@ -245,14 +255,27 @@ consider_nodes = None
 # get mappings, name to id
 name2id, edges = parseNet(opts.slgraph)
 
+print "Building the graph..."
+
 g = nx.Graph()
 g.add_edges_from(edges)
-edge_universe, node_universe, h = getSubnet(g)
+
+h = None
+# test only a subnetwork if this is a test run 
+if opts.subnet:
+	h = getSubnet(g)
+else:
+	h = g
+
+edge_universe = h.edges()
+node_universe = h.nodes()
 
 # if using a subset of all nodes, select a random
 # node and grow it by first-neighbors, then add
 # all inter-connections to get a maximally connected
 # subgraph centered at that node.
+
+print "Parsing data.."
 
 goBP = parseVals("goBP.tab")
 goCC = parseVals("goCC.tab")
@@ -268,6 +291,7 @@ ppiKernel = parseVals("ppi.kernelEdges.tab")
 gnegKernel = parseVals("gNeg.kernelEdges.tab")
 
 # split to train/test on the target 
+print "Doing data split..."
 slTrain, slLearn, slTest = splitThirds(edge_universe, h)
 
 edge_universe = {}
@@ -279,12 +303,14 @@ edge_universe = set(edge_universe.keys())
 
 print len(edge_universe)
 
+print "writing..."
+
 out = opts.train
 fh = open(out+'gene.txt', 'w')
 for name in name2id:
 
-	if name2id[name] not in node_universe:
-		continue
+	#if name2id[name] not in node_universe:
+	#	continue
 		
 	fh.write(name2id[name]+"\t"+name+"\n")
 fh.close()
@@ -353,4 +379,6 @@ printNet(fh, slTest, name2id, edge_universe)
 # infer just these values
 fh = open(out+'consider.txt', 'w')
 printEL(fh, slTest, name2id, edge_universe)
+
+
 

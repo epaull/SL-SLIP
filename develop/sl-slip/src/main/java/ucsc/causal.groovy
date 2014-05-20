@@ -41,6 +41,8 @@ import edu.umd.cs.psl.ui.functions.textsimilarity.*
 import edu.umd.cs.psl.ui.loading.InserterUtils;
 import edu.umd.cs.psl.util.database.Queries;
 
+import edu.umd.cs.psl.application.learning.weight.em.HardEM;
+
 /* 
  * The first thing we need to do is initialize a ConfigBundle and a DataStore
  */
@@ -180,7 +182,8 @@ Database truthDB = data.getDatabase(truthPart, [influences] as Set);
 DatabasePopulator dbPop = new DatabasePopulator(trainDB);
 dbPop.populateFromDB(truthDB, influences);
 
-MaxLikelihoodMPE weightLearning = new MaxLikelihoodMPE(m, trainDB, truthDB, config);
+HardEM weightLearning = new HardEM(m, trainDB, truthDB, config);
+//MaxLikelihoodMPE weightLearning = new MaxLikelihoodMPE(m, trainDB, truthDB, config);
 weightLearning.learn();
 weightLearning.close();
 

@@ -107,21 +107,21 @@ m.add predicate: "negKernel"	, types: [ArgumentType.UniqueID, ArgumentType.Uniqu
 */
 m.add rule : ( consider(A,B) & sl(A,X) & sl(X,B) & (A - B) ) >> ~sl(A,B),  weight : 1
 // this is the 2-hop SL-PPI rule
-m.add rule : ( consider(A,B) & sl(A,X) & ppiEdges(X,B) & (A - B) ) >> sl(A,B),  weight : 5
+m.add rule : ( consider(A,B) & sl(A,X) & ppiEdges(X,B) & (A - B) ) >> sl(A,B),  weight : 1
 
 // simple hypotheses for Gene Ontology interactions: we might need to update the prior weights here
-m.add rule : ( consider(A,B) & goBP(A,B) & ~goMF(A,B) & (A-B) ) >> sl(A,B), weight : 3
-m.add rule : ( consider(A,B) & goBP(A,B) & (A-B) ) >> sl(A,B), weight : 3
-m.add rule : ( consider(A,B) & goCC(A,B) & (A-B) ) >> sl(A,B), weight : 3
-m.add rule : ( consider(A,B) & goMF(A,B) & (A-B) ) >> sl(A,B), weight : 3
+m.add rule : ( consider(A,B) & goBP(A,B) & ~goMF(A,B) & (A-B) ) >> sl(A,B), weight : 1
+m.add rule : ( consider(A,B) & goBP(A,B) & (A-B) ) >> sl(A,B), weight : 1
+m.add rule : ( consider(A,B) & goCC(A,B) & (A-B) ) >> sl(A,B), weight : 1
+m.add rule : ( consider(A,B) & goMF(A,B) & (A-B) ) >> sl(A,B), weight : 1
 
 // SL means generally not connected in the PPI net
-m.add rule : ( consider(A,B) & ppiKernel(A,B) ) >> ~sl(A,B), weight : 5
+m.add rule : ( consider(A,B) & ppiKernel(A,B) ) >> ~sl(A,B), weight : 1
 // this should be predictive of SL, according to the Qi/Bader 2008 paper
-m.add rule : ( consider(A,B) & negKernel(A,B) ) >> sl(A,B), weight : 5
+m.add rule : ( consider(A,B) & negKernel(A,B) ) >> sl(A,B), weight : 1
 
 // 'friends' also likely to be connected in network
-m.add rule : ( consider(A,B) & ppiEdges(A,B) ) >> ~sl(A,B), weight : 3
+m.add rule : ( consider(A,B) & ppiEdges(A,B) ) >> ~sl(A,B), weight : 1
 
 // observed values --> also SL equivalent: this weight needs to be high
 // enough to 'lock down' the sl predicate when an edge is observed
