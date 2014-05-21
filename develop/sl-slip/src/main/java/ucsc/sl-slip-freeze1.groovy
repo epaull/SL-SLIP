@@ -268,9 +268,16 @@ for (Predicate p : [slObserved, goCC, goMF, goBP])
 Database testDB = data.getDatabase(testPart, [gene, slObserved, ppiEdges, goCC, goMF, goBP] as Set);
 MPEInference inference = new MPEInference(m, testDB, config);
 
-// just populate the random variables
+
+//create dummy partition
+Partition dummyPart = new Partition(3);
+insert = data.getInserter(sl, dummyPart)
+InserterUtils.loadDelimitedDataTruth(insert, testDir+sl.getName()+".txt");
+Database dummyDB = data.getDatabase(dummyPart, [sl] as Set);
+// initialize the random variables that will get inferred with 'sl' from the learning step
 DatabasePopulator dbPop2 = new DatabasePopulator(testDB);
-dbPop2.populateFromDB(labelsDB, sl);
+dbPop2.populateFromDB(dummyDB, sl);
+
 
 inference.mpeInference();
 inference.close();
