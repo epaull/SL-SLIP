@@ -100,8 +100,8 @@ m.add predicate: "ppiEdges"	, types: [ArgumentType.UniqueID, ArgumentType.Unique
 // when PSL grounds these, it won't ground the symmetrical case
 // another option is to duplicate these, and add symmetry
 // Experiment: reverse columns in the dataset, try both cases
-m.add rule : ( ~blocked(A,B) & sl(A,X) & sl(X,B) & (A - B) ) >> ~sl(A,B),  weight : 5
-m.add rule : ( ~blocked(A,B) & sl(A,X) & ppiEdges(X,B) & (A - B) ) >> sl(A,B),  weight : 5
+m.add rule : ( sl(A,X) & sl(X,B) & (A - B) ) >> ~sl(A,B),  weight : 5
+m.add rule : ( sl(A,X) & ppiEdges(X,B) & (A - B) ) >> sl(A,B),  weight : 5
 
 
 // Require a smaller intersection of the neighborhoods

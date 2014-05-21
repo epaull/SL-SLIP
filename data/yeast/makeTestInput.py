@@ -6,13 +6,13 @@ Just make a test/train split for code-testing purposes
 import networkx as nx
 import math
 import random
+import itertools
+import os
 
 from optparse import OptionParser
 parser = OptionParser()
-parser.add_option("--trainFolder",dest="train",action="store",type="string",default="TEST/train/")
-parser.add_option("--testFolder",dest="test",action="store",type="string",default="TEST/test/")
+parser.add_option("--output",dest="output",action="store",type="string",default="TEST")
 parser.add_option("--slgraph",dest="slgraph",action="store",type="string",default=None)
-parser.add_option("--subnet",dest="subnet",action="store_true",default=False)
 (opts, args) = parser.parse_args()
 
 def parseLST(file):
@@ -81,6 +81,39 @@ def parseNet(file):
 		i += 1
 	
 	return (map, edges)
+
+def parseGRAPH(file):
+
+	genes = set()
+	folds = {}
+	fh = None
+	try:
+		fh = open(file, 'r')
+	except:
+		raise Exception("Error: can't open file: "+file)
+
+	for line in fh:
+		fold, geneA, geneB, pos_neg = line.rstrip().split("\t")
+
+		if fold not in folds:
+			folds[fold] = {}
+
+		# no duplicates
+		if (geneB, geneA) in folds[fold] or (geneA, geneB) in folds[fold]:
+			continue
+
+		genes.add( geneA )
+		genes.add( geneB )
+		folds[fold][ (geneA, geneB) ] = pos_neg
+
+
+	map = {}
+	i = 1
+	for gene in genes:
+		map[gene] = str(i)
+		i += 1
+	
+	return (map, folds)
 
 def printGO(fh, vals, map, edge_universe, consider=None, symmetric=False):
 
@@ -175,18 +208,7 @@ def randomNegEdge(g):
 
 	return (first_node, second_node)
 
-def splitThirds(edges, g):
-	"""
-	Split into training set, learning set, and the held-out test set
-	"""
-	sample_size = int(len(edges) * 0.33)
-	edge_l = list(edges)
-	# indexes for edge_l of training sets
-	# take the first third
-	#train_indexes = random.sample(range(0, len(edge_l)), sample_size)
-	train_indexes = range(0, sample_size)
-	# all other indexes
-	learn_indexes = range(0, sample_size*2) 
+def splitData(folds, trainIdx, learnIdx, testIdx):
 
 	# training set is just the slObserved used to train the initial model
 	training_set = {}
@@ -195,36 +217,19 @@ def splitThirds(edges, g):
 	learning_set = {}
 	# the test set is completely held out from PSL and used for evaluation only
 	test_set = {}
-	for i in range(0, len(edge_l)):
-		if i % 10000 == 0:
-			print "..."
 
-		if i in train_indexes:
-			training_set[edge_l[i]] = "1.0"
-			learning_set[edge_l[i]] = "1.0"
-		elif i in learn_indexes:
-			learning_set[edge_l[i]] = "1.0"
-		else:
-			test_set[edge_l[i]] = "1.0"
+	for fold in folds:
+		for edge in folds[fold]:
+			
+			if fold in trainIdx:
+				training_set[edge] = folds[fold][edge]
+				learning_set[edge] = folds[fold][edge]
+			elif fold in learnIdx:
+				learning_set[edge] = folds[fold][edge]
+			else:
+				test_set[edge] = folds[fold][edge]
+		print "done!"
 
-	# now select a random set of edges between nodes in 'edges'
-	# that is of the same size as 'edges', split into thirds
-	# assigning priors to each
-	print "selecting random negative training cases..."
-	for i in range(0, len(edge_l)):
-		neg_edge = randomNegEdge(g)
-		if i % 10000 == 0:
-			print "..."
-
-		if i in train_indexes:
-			training_set[neg_edge] = "0.01"
-			learning_set[neg_edge] = "0.01"
-		elif i in learn_indexes:
-			learning_set[neg_edge] = "0.01"
-		else:
-			test_set[neg_edge] = "0.01"
-
-	print "done!"
 	return (training_set, learning_set, test_set)
 
 def getSubnet(g, min_edges=1000):
@@ -253,28 +258,17 @@ def getSubnet(g, min_edges=1000):
 consider_nodes = None
 
 # get mappings, name to id
-name2id, edges = parseNet(opts.slgraph)
+name2id, folds = parseGRAPH(opts.slgraph)
+edge_universe = set()
+node_universe = set()
+for fold in folds:
+	for edge in folds[fold]:
+		edge_universe.add( edge )
+		node_universe.add( edge[0] )
+		node_universe.add( edge[1] )
 
+print node_universe
 print "Building the graph..."
-
-g = nx.Graph()
-g.add_edges_from(edges)
-
-h = None
-# test only a subnetwork if this is a test run 
-if opts.subnet:
-	h = getSubnet(g)
-else:
-	h = g
-
-edge_universe = h.edges()
-node_universe = h.nodes()
-
-# if using a subset of all nodes, select a random
-# node and grow it by first-neighbors, then add
-# all inter-connections to get a maximally connected
-# subgraph centered at that node.
-
 print "Parsing data.."
 
 goBP = parseVals("goBP.tab")
@@ -290,95 +284,106 @@ ppiKernel = parseVals("ppi.kernelEdges.tab")
 # parse SGD Negative Kernel
 gnegKernel = parseVals("gNeg.kernelEdges.tab")
 
-# split to train/test on the target 
-print "Doing data split..."
-slTrain, slLearn, slTest = splitThirds(edge_universe, h)
+# for each fold, print out data
 
-edge_universe = {}
-for edge in slLearn:
-	edge_universe[edge] = 1
-for edge in slTest:
-	edge_universe[edge] = 1
-edge_universe = set(edge_universe.keys())
+print "writing data folds..."
 
-print len(edge_universe)
+i = 1
+for combo in itertools.combinations(folds.keys(), 3):
+	trainDir = opts.output+"/"+str(i)+"/train/"
+	testDir = opts.output+"/"+str(i)+"/test/"
+	os.mkdir(opts.output+"/"+str(i))
+	os.mkdir(trainDir)
+	os.mkdir(testDir)
+	i += 1
 
-print "writing..."
+	trainIdx = combo
+	learnIdx = None
+	testIdx = None
+	for j in range(1, 6):
+		if str(j) in trainIdx:
+			continue
+		learnIdx = str(j)
+		break
+	for j in range(1, 6):
+		if str(j) in learnIdx:
+			continue
+		testIdx = str(j)
+		break
 
-out = opts.train
-fh = open(out+'gene.txt', 'w')
-for name in name2id:
+	# flatten data into train/learn/test splits
 
-	#if name2id[name] not in node_universe:
-	#	continue
-		
-	fh.write(name2id[name]+"\t"+name+"\n")
-fh.close()
+	slTrain, slLearn, slTest = splitData(folds, trainIdx, learnIdx, testIdx)
 
-fh = open(out+'goBP.txt', 'w')
-printGO(fh, goBP, name2id, edge_universe)
+	out = trainDir
+	fh = open(out+'gene.txt', 'w')
+	for name in name2id:
 
-fh = open(out+'goCC.txt', 'w')
-printGO(fh, goCC, name2id, edge_universe)
-fh = open(out+'goMF.txt', 'w')
-printGO(fh, goCC, name2id, edge_universe)
+		fh.write(name2id[name]+"\t"+name+"\n")
 
-fh = open(out+'ppiEdges.txt', 'w')
-printNet(fh, ppiEdges , name2id, edge_universe)
+	fh.close()
 
-fh = open(out+'slObserved.txt', 'w')
-printNet(fh, slTrain , name2id, edge_universe)
+	fh = open(out+'goBP.txt', 'w')
+	printGO(fh, goBP, name2id, edge_universe)
 
-fh = open(out+'sl.txt', 'w')
-printNet(fh, slLearn, name2id, edge_universe)
+	fh = open(out+'goCC.txt', 'w')
+	printGO(fh, goCC, name2id, edge_universe)
+	fh = open(out+'goMF.txt', 'w')
+	printGO(fh, goCC, name2id, edge_universe)
 
-# print just the nodes to consider for SL learning
-fh = open(out+'consider.txt', 'w')
-printEL(fh, slLearn , name2id, edge_universe)
+	fh = open(out+'ppiEdges.txt', 'w')
+	printNet(fh, ppiEdges , name2id, edge_universe)
 
-fh = open(out+'ppiKernel.txt', 'w')
-printGO(fh, ppiKernel, name2id, edge_universe)
+	fh = open(out+'slObserved.txt', 'w')
+	printNet(fh, slTrain , name2id, edge_universe)
 
-fh = open(out+'negKernel.txt', 'w')
-printGO(fh, gnegKernel , name2id, edge_universe)
+	fh = open(out+'sl.txt', 'w')
+	printNet(fh, slLearn, name2id, edge_universe)
 
-out = opts.test
-fh = open(out+'gene.txt', 'w')
-for name in name2id:
+	# print just the nodes to consider for SL learning
+	fh = open(out+'consider.txt', 'w')
+	printEL(fh, slLearn , name2id, edge_universe)
 
-	if name2id[name] not in node_universe:
-		continue
+	fh = open(out+'ppiKernel.txt', 'w')
+	printGO(fh, ppiKernel, name2id, edge_universe)
 
-	fh.write(name2id[name]+"\t"+name+"\n")
-fh.close()
+	fh = open(out+'negKernel.txt', 'w')
+	printGO(fh, gnegKernel , name2id, edge_universe)
 
-fh = open(out+'goBP.txt', 'w')
-printGO(fh, goBP, name2id, edge_universe)
-
-fh = open(out+'goCC.txt', 'w')
-printGO(fh, goCC, name2id, edge_universe)
-fh = open(out+'goMF.txt', 'w')
-printGO(fh, goCC, name2id, edge_universe)
-
-fh = open(out+'ppiEdges.txt', 'w')
-printNet(fh, ppiEdges , name2id, edge_universe)
-
-# add all the data for testing here, to infer new edges
-fh = open(out+'slObserved.txt', 'w')
-printNet(fh, slLearn, name2id, edge_universe)
-
-fh = open(out+'ppiKernel.txt', 'w')
-printGO(fh, ppiKernel, name2id, edge_universe)
-
-fh = open(out+'negKernel.txt', 'w')
-printGO(fh, gnegKernel , name2id, edge_universe)
-
-fh = open(out+'heldOutSL.tab', 'w')
-printNet(fh, slTest, name2id, edge_universe)
-
-# infer just these values
-fh = open(out+'consider.txt', 'w')
-printEL(fh, slTest, name2id, edge_universe)
-
-
-
+	out = testDir
+	fh = open(out+'gene.txt', 'w')
+	for name in name2id:
+	
+		fh.write(name2id[name]+"\t"+name+"\n")
+	fh.close()
+	
+	fh = open(out+'goBP.txt', 'w')
+	printGO(fh, goBP, name2id, edge_universe)
+	
+	fh = open(out+'goCC.txt', 'w')
+	printGO(fh, goCC, name2id, edge_universe)
+	fh = open(out+'goMF.txt', 'w')
+	printGO(fh, goCC, name2id, edge_universe)
+	
+	fh = open(out+'ppiEdges.txt', 'w')
+	printNet(fh, ppiEdges , name2id, edge_universe)
+	
+	# add all the data for testing here, to infer new edges
+	fh = open(out+'slObserved.txt', 'w')
+	printNet(fh, slLearn, name2id, edge_universe)
+	
+	fh = open(out+'ppiKernel.txt', 'w')
+	printGO(fh, ppiKernel, name2id, edge_universe)
+	
+	fh = open(out+'negKernel.txt', 'w')
+	printGO(fh, gnegKernel , name2id, edge_universe)
+	
+	fh = open(out+'heldOutSL.tab', 'w')
+	printNet(fh, slTest, name2id, edge_universe)
+	
+	# infer just these values
+	fh = open(out+'consider.txt', 'w')
+	printEL(fh, slTest, name2id, edge_universe)
+	
+	
+	
