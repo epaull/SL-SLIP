@@ -136,12 +136,12 @@ def printGO(fh, vals, map, edge_universe, consider=None, symmetric=False):
 		done.add( (geneB, geneA) )
 
 		# take the cube root for GO mapping
-		val = math.pow(val, 0.333)
+		val = math.pow(float(val), 0.333)
 
-		fh.write("\t".join( [map[geneA], map[geneB], val] )+"\n")
+		fh.write("\t".join( [map[geneA], map[geneB], str(val)] )+"\n")
 		# print the symmetric case
 		if symmetric:
-			fh.write("\t".join( [map[geneB], map[geneA], val] )+"\n")
+			fh.write("\t".join( [map[geneB], map[geneA], str(val)] )+"\n")
 
 	fh.close()	
 
