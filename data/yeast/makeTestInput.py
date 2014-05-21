@@ -135,6 +135,9 @@ def printGO(fh, vals, map, edge_universe, consider=None, symmetric=False):
 		done.add( (geneA, geneB) )
 		done.add( (geneB, geneA) )
 
+		# take the cube root for GO mapping
+		val = math.pow(val, 0.333)
+
 		fh.write("\t".join( [map[geneA], map[geneB], val] )+"\n")
 		# print the symmetric case
 		if symmetric:
@@ -384,6 +387,8 @@ for combo in itertools.combinations(folds.keys(), 3):
 	# infer just these values
 	fh = open(out+'consider.txt', 'w')
 	printEL(fh, slTest, name2id, edge_universe)
-	
-	
-	
+
+	# need this for populating values	
+	fh = open(out+'sl.txt', 'w')
+	printNet(fh, slTest, name2id, edge_universe)
+
