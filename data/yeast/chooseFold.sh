@@ -1,29 +1,29 @@
 
 fold=$1
 
-mkdir -p TEST/train
-mkdir -p TEST/test
+mkdir -p FULL_5CV/train
+mkdir -p FULL_5CV/test
 
-cp TEST/$fold/train/goBP.txt TEST/train/GOBP.txt
-cp TEST/$fold/train/goCC.txt TEST/train/GOCC.txt
-cp TEST/$fold/train/goMF.txt TEST/train/GOMF.txt
-cp TEST/$fold/train/consider.txt TEST/train/CONSIDER.txt
-cp TEST/$fold/train/gene.txt TEST/train/GENE.txt
-cp TEST/$fold/train/ppiEdges.txt TEST/train/PPIEDGES.txt
-cp TEST/$fold/train/sl.txt TEST/train/SL.txt
-cp TEST/$fold/train/slObserved.txt TEST/train/SLOBSERVED.txt
-cp TEST/$fold/train/negKernel.txt TEST/train/NEGKERNEL.txt
-cp TEST/$fold/train/ppiKernel.txt TEST/train/PPIKERNEL.txt
+cp FULL_5CV/$fold/train/goBP.txt FULL_5CV/train/GOBP.txt
+cp FULL_5CV/$fold/train/goCC.txt FULL_5CV/train/GOCC.txt
+cp FULL_5CV/$fold/train/goMF.txt FULL_5CV/train/GOMF.txt
+cp FULL_5CV/$fold/train/consider.txt FULL_5CV/train/CONSIDER.txt
+cp FULL_5CV/$fold/train/gene.txt FULL_5CV/train/GENE.txt
+cp FULL_5CV/$fold/train/ppiEdges.txt FULL_5CV/train/PPIEDGES.txt
+cp FULL_5CV/$fold/train/sl.txt FULL_5CV/train/SL.txt
+cp FULL_5CV/$fold/train/slObserved.txt FULL_5CV/train/SLOBSERVED.txt
+cp FULL_5CV/$fold/train/negKernel.txt FULL_5CV/train/NEGKERNEL.txt
+cp FULL_5CV/$fold/train/ppiKernel.txt FULL_5CV/train/PPIKERNEL.txt
 
 
-cp TEST/$fold/test/goBP.txt TEST/test/GOBP.txt
-cp TEST/$fold/test/goCC.txt TEST/test/GOCC.txt
-cp TEST/$fold/test/goMF.txt TEST/test/GOMF.txt
-cp TEST/$fold/test/consider.txt TEST/test/CONSIDER.txt
-cp TEST/$fold/test/gene.txt TEST/test/GENE.txt
-cp TEST/$fold/test/ppiEdges.txt TEST/test/PPIEDGES.txt
-cp TEST/$fold/test/sl.txt TEST/test/SL.txt
-cp TEST/$fold/test/slObserved.txt TEST/test/SLOBSERVED.txt
-cp TEST/$fold/test/negKernel.txt TEST/test/NEGKERNEL.txt
-cp TEST/$fold/test/ppiKernel.txt TEST/test/PPIKERNEL.txt
-cp TEST/$fold/test/heldOutSL.tab TEST/test/heldOutSL.tab
+cp FULL_5CV/$fold/test/goBP.txt FULL_5CV/test/GOBP.txt
+cp FULL_5CV/$fold/test/goCC.txt FULL_5CV/test/GOCC.txt
+cp FULL_5CV/$fold/test/goMF.txt FULL_5CV/test/GOMF.txt
+cp FULL_5CV/$fold/test/consider.txt FULL_5CV/test/CONSIDER.txt
+cp FULL_5CV/$fold/test/gene.txt FULL_5CV/test/GENE.txt
+cp FULL_5CV/$fold/test/ppiEdges.txt FULL_5CV/test/PPIEDGES.txt
+cp FULL_5CV/$fold/test/sl.txt FULL_5CV/test/SL.txt
+cp FULL_5CV/$fold/test/slObserved.txt FULL_5CV/test/SLOBSERVED.txt
+cp FULL_5CV/$fold/test/negKernel.txt FULL_5CV/test/NEGKERNEL.txt
+cp FULL_5CV/$fold/test/ppiKernel.txt FULL_5CV/test/PPIKERNEL.txt
+cp FULL_5CV/$fold/test/heldOutSL.tab FULL_5CV/test/heldOutSL.tab

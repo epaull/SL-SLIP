@@ -105,16 +105,16 @@ m.add predicate: "negKernel"	, types: [ArgumentType.UniqueID, ArgumentType.Uniqu
  * sl (i.e directly connected). This could also be called the 'no triangles' rule...
  * 
 */
-m.add rule : ( consider(A,B) & sl(A,X) & sl(X,B) & (A - B) ) >> ~sl(A,B),  weight : 10
+m.add rule : ( consider(A,B) & slObserved(A,X) & slObserved(X,B) & (A - B) ) >> ~slObserved(A,B),  weight : 10
 
 // another experimental rule 
-m.add rule : ( consider(A,B) & sl(A,X) & negKernel(X,B) & (A - B) ) >> ~sl(A,B),  weight : 10
+m.add rule : ( consider(A,B) & slObserved(A,X) & negKernel(X,B) & (A - B) ) >> ~sl(A,B),  weight : 10
 
 // this is the 2-hop SL-PPI rule
-m.add rule : ( consider(A,B) & sl(A,X) & ppiEdges(X,B) & (A - B) ) >> sl(A,B),  weight : 10
+m.add rule : ( consider(A,B) & slObserved(A,X) & ppiEdges(X,B) & (A - B) ) >> sl(A,B),  weight : 10
 
 // with the PPI Kernel
-m.add rule : ( consider(A,B) & sl(A,X) & ppiKernel(X,B) & (A - B) ) >> sl(A,B),  weight : 10
+m.add rule : ( consider(A,B) & slObserved(A,X) & ppiKernel(X,B) & (A - B) ) >> sl(A,B),  weight : 10
 
 // simple hypotheses for Gene Ontology interactions: we might need to update the prior weights here
 m.add rule : ( consider(A,B) & goBP(A,B) & (A-B) ) >> sl(A,B), weight : 1

@@ -92,8 +92,13 @@ def parseGRAPH(file):
 	except:
 		raise Exception("Error: can't open file: "+file)
 
+	header = True
 	for line in fh:
-		fold, geneA, geneB, pos_neg = line.rstrip().split("\t")
+		if header:
+			header = False
+			continue
+	
+		geneA, geneB, fold, pos_neg = line.rstrip().split("\t")
 
 		if fold not in folds:
 			folds[fold] = {}
@@ -104,7 +109,10 @@ def parseGRAPH(file):
 
 		genes.add( geneA )
 		genes.add( geneB )
-		folds[fold][ (geneA, geneB) ] = pos_neg
+		type = 1
+		if pos_neg == "notSL":
+			type = 0
+		folds[fold][ (geneA, geneB) ] = type
 
 
 	map = {}
@@ -167,10 +175,10 @@ def printNet(fh, edges, map, edge_universe, consider=None, symmetric=True):
 		done.add( (geneA, geneB) )
 		done.add( (geneB, geneA) )
 
-		fh.write("\t".join( [map[geneA], map[geneB], val] )+"\n")
+		fh.write("\t".join( [map[geneA], map[geneB], str(val)] )+"\n")
 		# print the symmetric case
 		if symmetric:
-			fh.write("\t".join( [map[geneB], map[geneA], val] )+"\n")
+			fh.write("\t".join( [map[geneB], map[geneA], str(val)] )+"\n")
 
 	fh.close()	
 
