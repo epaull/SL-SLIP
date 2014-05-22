@@ -7,6 +7,7 @@
 """
 import networkx as nx
 import math
+import sys
 
 from optparse import OptionParser
 parser = OptionParser()
@@ -15,6 +16,8 @@ parser.add_option("--inferences",dest="inferences",action="store",type="string",
 parser.add_option("--truth",dest="truth",action="store",type="string",default=None)
 (opts, args) = parser.parse_args()
 
+import numpy as np
+from sklearn.metrics import roc_auc_score
 
 PSEUDO_COUNT = 0.01
 
@@ -92,9 +95,33 @@ def getRates(inferences, truth, threshold):
 		
 	return (TP, FP)	
 
+
+def getAUC(inferences, truth):
+
+	y_true = []
+	y_scores = []
+
+	for (A, B) in inferences:
+
+		inf = inferences[(A,B)]
+		t = None
+
+		if (A,B) in truth:
+			t = truth[(A,B)]
+		elif (B,A) in truth:
+			t = truth[(B,A)]
+
+		y_true.append(t)		
+		y_scores.append(inf)		
+
+	return roc_auc_score(y_true, y_scores)
+
 truth = parseTruth(opts.truth)
 inferences = parseInf(opts.inferences)
 map = parseMap(opts.map)
+
+print "AUC: "+str(getAUC(inferences, truth))
+sys.exit(0)
 
 total_TP = 0.0
 total_FP = 0.0
