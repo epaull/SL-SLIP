@@ -111,6 +111,9 @@ def getAUC(inferences, truth):
 		elif (B,A) in truth:
 			t = truth[(B,A)]
 
+		if t < 1:
+			t = 0
+
 		y_true.append(t)		
 		y_scores.append(inf)		
 

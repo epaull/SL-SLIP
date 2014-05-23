@@ -97,7 +97,7 @@ m.add predicate: "ppiEdges"	, types: [ArgumentType.UniqueID, ArgumentType.Unique
 // KERNEL arguments
 m.add predicate: "ppiKernel"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 // G- SL kernel from Qi/Bader 2008
-m.add predicate: "negKernel"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
+//m.add predicate: "negKernel"	, types: [ArgumentType.UniqueID, ArgumentType.UniqueID]
 
 /* 
  * The 'Enemy of my Enemy is my Friend' Rule
@@ -108,7 +108,7 @@ m.add predicate: "negKernel"	, types: [ArgumentType.UniqueID, ArgumentType.Uniqu
 m.add rule : ( consider(A,B) & sl(A,X) & sl(X,B) & (A - B) ) >> ~sl(A,B),  weight : 10
 
 // another experimental rule 
-m.add rule : ( consider(A,B) & sl(A,X) & negKernel(X,B) & (A - B) ) >> ~sl(A,B),  weight : 10
+//m.add rule : ( consider(A,B) & sl(A,X) & negKernel(X,B) & (A - B) ) >> ~sl(A,B),  weight : 10
 
 // this is the 2-hop SL-PPI rule
 m.add rule : ( consider(A,B) & sl(A,X) & ppiEdges(X,B) & (A - B) ) >> sl(A,B),  weight : 10
@@ -126,7 +126,7 @@ m.add rule : ( consider(A,B) & goCC(A,B) & ~goMF(A,B) & (A-B) ) >> sl(A,B), weig
 // SL means generally not connected in the PPI net
 m.add rule : ( consider(A,B) & ppiKernel(A,B) ) >> ~sl(A,B), weight : 10
 // this should be predictive of SL, according to the Qi/Bader 2008 paper
-m.add rule : ( consider(A,B) & negKernel(A,B) ) >> sl(A,B), weight : 10
+m//.add rule : ( consider(A,B) & negKernel(A,B) ) >> sl(A,B), weight : 10
 
 // 'friends' also likely to be connected in network
 m.add rule : ( consider(A,B) & ppiEdges(A,B) ) >> ~sl(A,B), weight : 10
@@ -143,7 +143,7 @@ m.add PredicateConstraint.Symmetric, on : goBP
 m.add PredicateConstraint.Symmetric, on : goMF
 m.add PredicateConstraint.Symmetric, on : ppiEdges
 m.add PredicateConstraint.Symmetric, on : ppiKernel
-m.add PredicateConstraint.Symmetric, on : negKernel
+//m.add PredicateConstraint.Symmetric, on : negKernel
 m.add PredicateConstraint.Symmetric, on : consider
 
 /*
@@ -164,7 +164,7 @@ println m;
 Partition trainPart = new Partition(0);
 Partition labelsPart = new Partition(1);
 
-def dir = '../../data/yeast/FULL_5CV/';
+def dir = '../../data/yeast/SUBGRAPHS/';
 def trainDir = dir+'train'+java.io.File.separator;
 
 // Load static data
@@ -177,7 +177,7 @@ for (Predicate p : [gene, consider])
 
 // load training 'truth' data. These should have a third column, 0-1 values
 // 
-for (Predicate p : [slObserved, goCC, goMF, goBP, ppiEdges, ppiKernel, negKernel])
+for (Predicate p : [slObserved, goCC, goMF, goBP, ppiEdges, ppiKernel])
 {
         println "\t\t\tREADING Training Data " + trainDir+p.getName()+".txt";
 	insert = data.getInserter(p, trainPart)
@@ -206,7 +206,7 @@ println "\t\tLEARNING WEIGHTS...";
 // not a supervised task
 
 // 
-Database trainDB = data.getDatabase(trainPart, [gene, consider, slObserved, ppiEdges, goCC, goBP, goMF, ppiKernel, negKernel] as Set);
+Database trainDB = data.getDatabase(trainPart, [gene, consider, slObserved, ppiEdges, goCC, goBP, goMF, ppiKernel] as Set);
 Database labelsDB = data.getDatabase(labelsPart, [sl] as Set);
 
 // populate database
@@ -249,7 +249,7 @@ for (Predicate p : [slObserved, goCC, goMF, goBP, ppiEdges])
 }
 
 // don't close the sl interactions this time, but clamp everything else
-Database testDB = data.getDatabase(testPart, [gene, consider, slObserved, ppiEdges, goCC, goMF, goBP, ppiKernel, negKernel] as Set);
+Database testDB = data.getDatabase(testPart, [gene, consider, slObserved, ppiEdges, goCC, goMF, goBP, ppiKernel] as Set);
 MPEInference inference = new MPEInference(m, testDB, config);
 
 //create dummy partition
