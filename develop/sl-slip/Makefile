@@ -8,6 +8,9 @@ toy:
 k-run:
 	java -cp ./target/classes:`cat classpath.Kolossus.out` src.main.ucsc.sl-slip
 
+k-baseline:
+	java -cp ./target/classes:`cat classpath.Kolossus.out` src.main.ucsc.sl-slip.noCollab
+
 laptop-causal:
 	java -cp ./target/classes:`cat classpath.EvansLaptop.out` src.main.ucsc.causal
 

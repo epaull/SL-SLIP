@@ -1,0 +1,34 @@
+java -cp ./target/classes:`cat classpath.Kolossus.out` src.main.ucsc.sl-slip.noCollab
+/tmp/sl-slip
+Model:
+{constraint} Symmetry on SL(UniqueID, UniqueID)
+{constraint} Symmetry on SLOBSERVED(UniqueID, UniqueID)
+{constraint} Symmetry on GOCC(UniqueID, UniqueID)
+{constraint} Symmetry on GOBP(UniqueID, UniqueID)
+{constraint} Symmetry on GOMF(UniqueID, UniqueID)
+{constraint} Symmetry on PPIEDGES(UniqueID, UniqueID)
+{constraint} Symmetry on PPIKERNEL(UniqueID, UniqueID)
+{constraint} Symmetry on CONSIDER(UniqueID, UniqueID)
+{10.0} ( ( ( CONSIDER(A, B) & SLOBSERVED(A, X) ) & SL(X, B) ) & #NOTEQUAL(A, B) ) >> ~( SL(A, B) ) {squared}
+{10.0} ( ( ( CONSIDER(A, B) & SLOBSERVED(A, X) ) & PPIEDGES(X, B) ) & #NOTEQUAL(A, B) ) >> SL(A, B) {squared}
+{10.0} ( ( ( CONSIDER(A, B) & SLOBSERVED(A, X) ) & PPIKERNEL(X, B) ) & #NOTEQUAL(A, B) ) >> SL(A, B) {squared}
+{1.0} ( ( CONSIDER(A, B) & GOBP(A, B) ) & #NOTEQUAL(A, B) ) >> SL(A, B) {squared}
+{1.0} ( ( CONSIDER(A, B) & GOCC(A, B) ) & #NOTEQUAL(A, B) ) >> SL(A, B) {squared}
+{1.0} ( ( CONSIDER(A, B) & GOMF(A, B) ) & #NOTEQUAL(A, B) ) >> SL(A, B) {squared}
+{1.0} ( ( ( CONSIDER(A, B) & GOBP(A, B) ) & ~( GOMF(A, B) ) ) & #NOTEQUAL(A, B) ) >> SL(A, B) {squared}
+{1.0} ( ( ( CONSIDER(A, B) & GOCC(A, B) ) & ~( GOMF(A, B) ) ) & #NOTEQUAL(A, B) ) >> SL(A, B) {squared}
+{10.0} ( CONSIDER(A, B) & PPIKERNEL(A, B) ) >> ~( SL(A, B) ) {squared}
+{10.0} ( CONSIDER(A, B) & PPIEDGES(A, B) ) >> ~( SL(A, B) ) {squared}
+{100.0} ( CONSIDER(A, B) & SLOBSERVED(A, B) ) >> SL(A, B) {squared}
+{1.0} ~( SL(A, B) ) {squared}
+
+			READING Ground Variable ../../data/yeast/SUBGRAPHS/train/GENE.txt
+			READING Ground Variable ../../data/yeast/SUBGRAPHS/train/CONSIDER.txt
+			READING Training Data ../../data/yeast/SUBGRAPHS/train/SLOBSERVED.txt
+			READING Training Data ../../data/yeast/SUBGRAPHS/train/GOCC.txt
+			READING Training Data ../../data/yeast/SUBGRAPHS/train/GOMF.txt
+			READING Training Data ../../data/yeast/SUBGRAPHS/train/GOBP.txt
+			READING Training Data ../../data/yeast/SUBGRAPHS/train/PPIEDGES.txt
+			READING Training Data ../../data/yeast/SUBGRAPHS/train/PPIKERNEL.txt
+			Loading existing sl interactions..
+		LEARNING WEIGHTS...
