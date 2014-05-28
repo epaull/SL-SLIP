@@ -1,0 +1,598 @@
+java -cp ./target/classes:`cat classpath.Kolossus.out` src.main.ucsc.sl-slip.noCollab
+/tmp/sl-slip
+Model:
+{constraint} Symmetry on SL(UniqueID, UniqueID)
+{constraint} Symmetry on SLOBSERVED(UniqueID, UniqueID)
+{constraint} Symmetry on GOCC(UniqueID, UniqueID)
+{constraint} Symmetry on GOBP(UniqueID, UniqueID)
+{constraint} Symmetry on GOMF(UniqueID, UniqueID)
+{constraint} Symmetry on PPIEDGES(UniqueID, UniqueID)
+{constraint} Symmetry on PPIKERNEL(UniqueID, UniqueID)
+{constraint} Symmetry on CONSIDER(UniqueID, UniqueID)
+{10.0} ( ( ( CONSIDER(A, B) & SLOBSERVED(A, X) ) & SL(X, B) ) & #NOTEQUAL(A, B) ) >> ~( SL(A, B) ) {squared}
+{10.0} ( ( ( CONSIDER(A, B) & SLOBSERVED(A, X) ) & PPIEDGES(X, B) ) & #NOTEQUAL(A, B) ) >> SL(A, B) {squared}
+{10.0} ( ( ( CONSIDER(A, B) & SLOBSERVED(A, X) ) & PPIKERNEL(X, B) ) & #NOTEQUAL(A, B) ) >> SL(A, B) {squared}
+{1.0} ( ( CONSIDER(A, B) & GOBP(A, B) ) & #NOTEQUAL(A, B) ) >> SL(A, B) {squared}
+{1.0} ( ( CONSIDER(A, B) & GOCC(A, B) ) & #NOTEQUAL(A, B) ) >> SL(A, B) {squared}
+{1.0} ( ( CONSIDER(A, B) & GOMF(A, B) ) & #NOTEQUAL(A, B) ) >> SL(A, B) {squared}
+{1.0} ( ( ( CONSIDER(A, B) & GOBP(A, B) ) & ~( GOMF(A, B) ) ) & #NOTEQUAL(A, B) ) >> SL(A, B) {squared}
+{1.0} ( ( ( CONSIDER(A, B) & GOCC(A, B) ) & ~( GOMF(A, B) ) ) & #NOTEQUAL(A, B) ) >> SL(A, B) {squared}
+{10.0} ( CONSIDER(A, B) & PPIKERNEL(A, B) ) >> ~( SL(A, B) ) {squared}
+{10.0} ( CONSIDER(A, B) & PPIEDGES(A, B) ) >> ~( SL(A, B) ) {squared}
+{100.0} ( CONSIDER(A, B) & SLOBSERVED(A, B) ) >> SL(A, B) {squared}
+{1.0} ~( SL(A, B) ) {squared}
+
+			READING Ground Variable ../../data/yeast/SUBGRAPHS/train/GENE.txt
+			READING Ground Variable ../../data/yeast/SUBGRAPHS/train/CONSIDER.txt
+			READING Training Data ../../data/yeast/SUBGRAPHS/train/SLOBSERVED.txt
+			READING Training Data ../../data/yeast/SUBGRAPHS/train/GOCC.txt
+			READING Training Data ../../data/yeast/SUBGRAPHS/train/GOMF.txt
+			READING Training Data ../../data/yeast/SUBGRAPHS/train/GOBP.txt
+			READING Training Data ../../data/yeast/SUBGRAPHS/train/PPIEDGES.txt
+			READING Training Data ../../data/yeast/SUBGRAPHS/train/PPIKERNEL.txt
+			Loading existing sl interactions..
+		LEARNING WEIGHTS...
+		LEARNING WEIGHTS DONE
+Model:
+{constraint} Symmetry on SL(UniqueID, UniqueID)
+{constraint} Symmetry on SLOBSERVED(UniqueID, UniqueID)
+{constraint} Symmetry on GOCC(UniqueID, UniqueID)
+{constraint} Symmetry on GOBP(UniqueID, UniqueID)
+{constraint} Symmetry on GOMF(UniqueID, UniqueID)
+{constraint} Symmetry on PPIEDGES(UniqueID, UniqueID)
+{constraint} Symmetry on PPIKERNEL(UniqueID, UniqueID)
+{constraint} Symmetry on CONSIDER(UniqueID, UniqueID)
+{0.2833735384994996} ( ( ( CONSIDER(A, B) & SLOBSERVED(A, X) ) & SL(X, B) ) & #NOTEQUAL(A, B) ) >> ~( SL(A, B) ) {squared}
+{1.665273729827574} ( ( ( CONSIDER(A, B) & SLOBSERVED(A, X) ) & PPIEDGES(X, B) ) & #NOTEQUAL(A, B) ) >> SL(A, B) {squared}
+{0.22037286392479427} ( ( ( CONSIDER(A, B) & SLOBSERVED(A, X) ) & PPIKERNEL(X, B) ) & #NOTEQUAL(A, B) ) >> SL(A, B) {squared}
+{0.0} ( ( CONSIDER(A, B) & GOBP(A, B) ) & #NOTEQUAL(A, B) ) >> SL(A, B) {squared}
+{0.0} ( ( CONSIDER(A, B) & GOCC(A, B) ) & #NOTEQUAL(A, B) ) >> SL(A, B) {squared}
+{0.0} ( ( CONSIDER(A, B) & GOMF(A, B) ) & #NOTEQUAL(A, B) ) >> SL(A, B) {squared}
+{2.267672630512607E-4} ( ( ( CONSIDER(A, B) & GOBP(A, B) ) & ~( GOMF(A, B) ) ) & #NOTEQUAL(A, B) ) >> SL(A, B) {squared}
+{1.0} ( ( ( CONSIDER(A, B) & GOCC(A, B) ) & ~( GOMF(A, B) ) ) & #NOTEQUAL(A, B) ) >> SL(A, B) {squared}
+{5.944657585453627} ( CONSIDER(A, B) & PPIKERNEL(A, B) ) >> ~( SL(A, B) ) {squared}
+{8.274921281487822} ( CONSIDER(A, B) & PPIEDGES(A, B) ) >> ~( SL(A, B) ) {squared}
+{109.97402849977216} ( CONSIDER(A, B) & SLOBSERVED(A, B) ) >> SL(A, B) {squared}
+{0.0} ~( SL(A, B) ) {squared}
+
+		INFERRING...
+			READING Ground Variable ../../data/yeast/SUBGRAPHS/test/GENE.txt
+			READING Ground Variable ../../data/yeast/SUBGRAPHS/test/CONSIDER.txt
+			READING Training Data ../../data/yeast/SUBGRAPHS/test/SLOBSERVED.txt
+			READING Training Data ../../data/yeast/SUBGRAPHS/test/GOCC.txt
+			READING Training Data ../../data/yeast/SUBGRAPHS/test/GOMF.txt
+			READING Training Data ../../data/yeast/SUBGRAPHS/test/GOBP.txt
+			READING Training Data ../../data/yeast/SUBGRAPHS/test/PPIEDGES.txt
+		INFERENCE DONE
+SL(88, 67)	0.0
+SL(69, 82)	0.0
+SL(88, 66)	0.0
+SL(2, 3)	0.0
+SL(2, 7)	0.0
+SL(86, 85)	0.0
+SL(88, 59)	0.0
+SL(85, 86)	0.0
+SL(32, 3)	0.0
+SL(67, 88)	0.0
+SL(87, 48)	0.0
+SL(87, 44)	0.0
+SL(3, 2)	0.0
+SL(30, 3)	0.0
+SL(78, 40)	0.0
+SL(88, 24)	0.0
+SL(48, 87)	0.0
+SL(88, 15)	1.0
+SL(79, 27)	0.0
+SL(84, 65)	0.0
+SL(79, 26)	0.0
+SL(79, 25)	0.0
+SL(79, 24)	0.0
+SL(79, 22)	0.0
+SL(86, 41)	0.0
+SL(15, 9)	0.0
+SL(82, 81)	0.002960655306988415
+SL(87, 22)	0.0
+SL(87, 24)	0.0
+SL(36, 2)	0.0
+SL(87, 25)	0.0
+SL(82, 88)	0.003698122295904132
+SL(79, 18)	0.0
+SL(78, 27)	0.0
+SL(73, 80)	0.0
+SL(78, 24)	0.0
+SL(86, 24)	0.0
+SL(86, 22)	0.0
+SL(81, 82)	0.0029606874096020125
+SL(81, 88)	3.399803144806504E-4
+SL(82, 69)	0.0
+SL(79, 43)	0.0
+SL(49, 59)	0.0
+SL(77, 64)	0.0
+SL(77, 65)	0.0
+SL(17, 5)	0.0
+SL(75, 80)	0.0
+SL(79, 37)	0.0
+SL(83, 42)	0.0
+SL(85, 24)	0.0
+SL(84, 24)	0.0
+SL(84, 25)	0.0
+SL(55, 4)	0.0
+SL(66, 40)	0.0
+SL(58, 38)	0.0
+SL(3, 32)	0.0
+SL(59, 24)	0.0
+SL(66, 46)	0.0
+SL(3, 30)	0.0
+SL(54, 80)	0.0
+SL(59, 21)	0.0
+SL(67, 24)	0.0
+SL(76, 22)	0.0
+SL(75, 34)	0.0
+SL(3, 28)	0.8494711375232964
+SL(72, 71)	0.0
+SL(76, 27)	0.0
+SL(80, 73)	0.0
+SL(71, 88)	0.0
+SL(80, 75)	0.0
+SL(76, 24)	0.0
+SL(57, 40)	0.0
+SL(56, 52)	0.0
+SL(47, 7)	0.0
+SL(74, 32)	0.0
+SL(2, 36)	0.0
+SL(56, 7)	0.0
+SL(83, 24)	0.0
+SL(75, 27)	0.0
+SL(82, 41)	0.0
+SL(58, 24)	0.0
+SL(75, 24)	0.0
+SL(58, 21)	0.0
+SL(75, 21)	0.0
+SL(39, 8)	0.0
+SL(64, 4)	0.0
+SL(56, 44)	0.0
+SL(63, 66)	0.0
+SL(71, 72)	0.0
+SL(78, 10)	0.0
+SL(77, 27)	0.0
+SL(66, 23)	0.9997402384226929
+SL(82, 29)	0.0
+SL(66, 24)	0.0
+SL(82, 24)	0.0
+SL(18, 79)	0.0
+SL(59, 49)	0.0
+SL(82, 32)	0.0
+SL(66, 16)	0.0
+SL(75, 57)	0.0
+SL(81, 46)	0.0
+SL(58, 59)	0.0
+SL(63, 57)	0.0
+SL(57, 63)	0.0
+SL(78, 20)	0.0
+SL(80, 54)	0.0
+SL(58, 51)	0.0
+SL(59, 39)	0.0
+SL(65, 24)	0.0
+SL(20, 28)	0.0
+SL(62, 50)	0.8185773267248357
+SL(21, 18)	0.0
+SL(76, 31)	0.0
+SL(81, 33)	6.645242979748063E-4
+SL(77, 20)	0.0
+SL(63, 44)	0.0
+SL(62, 58)	0.0
+SL(77, 24)	0.0
+SL(20, 25)	0.0
+SL(20, 24)	0.9997089218034241
+SL(30, 10)	0.0
+SL(66, 88)	0.0
+SL(80, 33)	1.0
+SL(20, 33)	0.0
+SL(67, 65)	0.0
+SL(21, 27)	0.0
+SL(81, 24)	0.0
+SL(20, 39)	0.0
+SL(21, 23)	0.0
+SL(21, 24)	0.0
+SL(81, 27)	0.0
+SL(18, 21)	0.0
+SL(22, 10)	0.0
+SL(60, 1)	0.0
+SL(17, 39)	0.8387250041711719
+SL(30, 24)	0.650648093642849
+SL(59, 58)	0.0
+SL(30, 21)	0.0
+SL(65, 84)	0.0
+SL(71, 24)	0.0
+SL(58, 62)	0.0
+SL(20, 46)	0.0
+SL(21, 30)	0.0
+SL(57, 75)	0.0
+SL(70, 45)	0.0
+SL(80, 24)	0.0
+SL(69, 35)	0.0
+SL(22, 24)	0.0
+SL(68, 40)	0.0
+SL(30, 27)	0.0
+SL(21, 37)	0.0
+SL(52, 6)	0.0
+SL(22, 27)	0.0
+SL(59, 88)	0.0
+SL(73, 35)	0.0
+SL(66, 63)	0.0
+SL(65, 77)	0.0
+SL(20, 52)	0.0
+SL(69, 23)	0.9997402384226929
+SL(69, 24)	0.0
+SL(16, 66)	0.0
+SL(21, 40)	0.0
+SL(21, 41)	0.0
+SL(69, 22)	0.0
+SL(22, 31)	0.0
+SL(17, 56)	0.08244199401185213
+SL(73, 24)	0.0
+SL(22, 37)	0.0
+SL(23, 21)	0.0
+SL(24, 12)	0.6655245330648354
+SL(23, 28)	0.0
+SL(23, 27)	0.0
+SL(24, 11)	0.0
+SL(49, 5)	0.0030013119824841288
+SL(73, 27)	0.0
+SL(65, 67)	0.0
+SL(73, 21)	0.0
+SL(64, 77)	0.0
+SL(20, 62)	0.0
+SL(19, 38)	0.002426703014762972
+SL(21, 50)	0.0
+SL(54, 8)	0.0
+SL(21, 55)	0.0
+SL(68, 24)	0.0
+SL(15, 88)	0.9996013847020013
+SL(21, 58)	0.0
+SL(70, 60)	0.0
+SL(21, 59)	0.0
+SL(18, 53)	0.0
+SL(22, 46)	0.0
+SL(22, 44)	0.0
+SL(22, 45)	0.0
+SL(5, 74)	0.0
+SL(23, 51)	0.0
+SL(50, 27)	0.7143991927779909
+SL(22, 69)	0.0
+SL(50, 24)	0.0
+SL(50, 26)	0.0
+SL(21, 73)	0.0
+SL(21, 75)	0.0
+SL(50, 21)	0.0
+SL(24, 35)	0.0
+SL(24, 36)	0.5900024562655392
+SL(25, 20)	0.0
+SL(24, 37)	0.8079022465856684
+SL(7, 56)	0.0
+SL(24, 38)	0.6890427762151522
+SL(42, 24)	0.0
+SL(24, 39)	0.6350909753520555
+SL(25, 24)	0.0
+SL(14, 32)	0.0
+SL(24, 30)	0.6627283483577455
+SL(5, 82)	0.002978141183383726
+SL(24, 31)	0.5699537386299562
+SL(24, 32)	0.0
+SL(24, 33)	0.6987509517922089
+SL(12, 57)	0.0
+SL(24, 34)	0.6143727953490246
+SL(22, 51)	0.0
+SL(6, 73)	0.9997402384226929
+SL(31, 42)	0.0
+SL(10, 78)	0.0
+SL(33, 25)	0.0
+SL(20, 78)	0.0
+SL(33, 24)	0.6982796602657652
+SL(40, 35)	0.0
+SL(6, 76)	0.0
+SL(11, 60)	1.0
+SL(20, 77)	0.0
+SL(21, 60)	0.0
+SL(41, 24)	0.0
+SL(33, 20)	0.0
+SL(32, 35)	0.0
+SL(41, 21)	0.0
+SL(24, 26)	0.0
+SL(25, 11)	0.0
+SL(24, 27)	0.5394889262843384
+SL(8, 54)	0.0
+SL(24, 25)	0.0
+SL(42, 15)	0.0
+SL(60, 11)	0.9993229593986586
+SL(41, 29)	0.0
+SL(24, 28)	0.0
+SL(24, 29)	0.0
+SL(30, 54)	0.0
+SL(24, 22)	0.0
+SL(23, 38)	0.0
+SL(24, 20)	1.0
+SL(24, 21)	0.0
+SL(27, 29)	0.0
+SL(27, 26)	0.0
+SL(22, 87)	0.0
+SL(27, 28)	0.5933755618994014
+SL(4, 67)	0.0
+SL(22, 86)	0.0
+SL(41, 55)	0.0
+SL(32, 24)	0.0
+SL(27, 22)	0.0
+SL(27, 21)	0.0
+SL(32, 26)	0.0
+SL(27, 24)	0.5398316761270178
+SL(27, 23)	0.0
+SL(40, 66)	0.0
+SL(40, 68)	0.0
+SL(60, 21)	0.0
+SL(14, 55)	0.0
+SL(26, 32)	0.0
+SL(24, 57)	0.0
+SL(24, 58)	0.0
+SL(42, 44)	0.0
+SL(15, 42)	0.0
+SL(24, 59)	0.0
+SL(44, 22)	0.0
+SL(23, 69)	1.0
+SL(24, 53)	0.5837686579817468
+SL(24, 54)	0.0
+SL(44, 24)	0.0
+SL(9, 15)	0.0
+SL(24, 55)	0.0
+SL(24, 56)	0.831476174227327
+SL(23, 66)	1.0
+SL(24, 50)	0.0
+SL(24, 51)	0.0
+SL(24, 52)	0.5626894846922564
+SL(31, 22)	0.0
+SL(22, 79)	0.0
+SL(6, 52)	0.0
+SL(22, 76)	0.0
+SL(31, 24)	0.5698810633585834
+SL(16, 29)	0.0
+SL(32, 14)	0.0
+SL(22, 71)	0.0
+SL(26, 28)	0.0
+SL(41, 44)	0.0
+SL(26, 27)	0.0
+SL(40, 57)	0.0
+SL(61, 10)	0.0
+SL(26, 24)	0.0
+SL(60, 24)	0.0
+SL(24, 48)	0.0
+SL(25, 33)	0.0
+SL(24, 49)	0.0
+SL(42, 31)	0.0
+SL(24, 46)	0.0
+SL(7, 47)	0.0
+SL(24, 47)	0.0
+SL(24, 44)	0.0
+SL(24, 45)	0.0
+SL(9, 28)	0.8495026341394136
+SL(24, 42)	0.0
+SL(24, 43)	0.0
+SL(23, 56)	0.9792515867952264
+SL(24, 40)	0.0
+SL(24, 41)	0.0
+SL(43, 24)	0.0
+SL(8, 39)	0.0
+SL(38, 19)	0.0024267932368807026
+SL(1, 80)	0.9997089218034241
+SL(61, 24)	0.0
+SL(1, 85)	0.0
+SL(61, 26)	0.0
+SL(27, 48)	0.0
+SL(38, 11)	2.0544333842872496E-4
+SL(61, 29)	0.0
+SL(37, 22)	0.0
+SL(32, 82)	0.0
+SL(24, 80)	0.0
+SL(37, 24)	0.806390452462911
+SL(24, 81)	0.0
+SL(28, 38)	0.0
+SL(10, 48)	0.0
+SL(24, 71)	0.0
+SL(37, 21)	0.0
+SL(70, 27)	0.0
+SL(24, 73)	0.0
+SL(24, 76)	0.0
+SL(24, 75)	0.0
+SL(29, 16)	0.0
+SL(70, 24)	0.0
+SL(24, 78)	0.0
+SL(24, 77)	0.0
+SL(25, 64)	0.0
+SL(24, 79)	0.0
+SL(26, 50)	0.0
+SL(26, 52)	0.0
+SL(26, 51)	0.0
+SL(35, 40)	0.0
+SL(27, 30)	0.0
+SL(10, 30)	0.0
+SL(5, 49)	0.003001332167980373
+SL(62, 20)	0.0
+SL(26, 49)	0.0
+SL(11, 24)	0.0
+SL(62, 24)	0.0
+SL(11, 25)	0.0
+SL(4, 55)	0.0
+SL(28, 23)	0.0
+SL(28, 20)	0.0
+SL(32, 74)	0.0
+SL(28, 26)	0.0
+SL(24, 70)	0.0
+SL(28, 27)	0.5933045690838383
+SL(28, 24)	0.0
+SL(24, 63)	0.0
+SL(71, 22)	0.0
+SL(24, 62)	0.0
+SL(67, 4)	0.0
+SL(24, 61)	0.0
+SL(36, 24)	0.5861843217780028
+SL(24, 60)	0.0
+SL(24, 67)	0.0
+SL(24, 66)	0.0
+SL(4, 64)	0.0
+SL(24, 65)	0.0
+SL(24, 64)	0.0
+SL(24, 69)	0.0
+SL(35, 32)	0.0
+SL(7, 26)	0.0
+SL(25, 52)	0.0
+SL(24, 68)	0.0
+SL(61, 47)	0.0
+SL(10, 61)	0.0
+SL(33, 53)	0.001799773280212119
+SL(1, 60)	0.0
+SL(5, 17)	0.0
+SL(40, 24)	0.0
+SL(26, 79)	0.0
+SL(29, 41)	0.0
+SL(31, 76)	0.0
+SL(40, 21)	0.0
+SL(63, 24)	0.0
+SL(66, 1)	0.0
+SL(12, 40)	0.0
+SL(35, 24)	0.0
+SL(25, 84)	0.0
+SL(29, 34)	0.9992428059524107
+SL(25, 87)	0.0
+SL(1, 66)	0.0
+SL(27, 56)	0.9793299995819148
+SL(27, 54)	0.0
+SL(27, 55)	0.0
+SL(27, 53)	0.9992858705216644
+SL(27, 50)	0.7143134503386174
+SL(40, 12)	0.0
+SL(63, 35)	0.0
+SL(11, 47)	0.0
+SL(60, 70)	0.0
+SL(12, 24)	0.6639213486247247
+SL(64, 26)	0.0
+SL(24, 88)	0.0
+SL(64, 25)	0.0
+SL(24, 87)	0.0
+SL(11, 38)	2.0544333842872496E-4
+SL(34, 29)	1.0
+SL(64, 24)	0.0
+SL(24, 86)	0.0
+SL(29, 27)	0.0
+SL(24, 85)	0.0
+SL(24, 84)	0.0
+SL(29, 24)	0.0
+SL(24, 83)	0.0
+SL(24, 82)	0.0
+SL(34, 24)	0.6141365248420306
+SL(26, 64)	0.0
+SL(25, 79)	0.0
+SL(26, 61)	0.0
+SL(72, 7)	0.0
+SL(27, 81)	0.0
+SL(49, 24)	0.0
+SL(45, 70)	0.0
+SL(44, 87)	0.0
+SL(49, 26)	0.0
+SL(29, 61)	0.0
+SL(80, 1)	1.0
+SL(38, 55)	0.0
+SL(57, 24)	0.0
+SL(38, 58)	0.0
+SL(28, 3)	0.849278793424051
+SL(48, 24)	0.0
+SL(55, 41)	0.0
+SL(48, 27)	0.0
+SL(27, 70)	0.0
+SL(73, 6)	1.0
+SL(35, 73)	0.0
+SL(29, 51)	0.0
+SL(27, 73)	0.0
+SL(57, 12)	0.0
+SL(27, 75)	0.0
+SL(56, 27)	0.9799874972925623
+SL(55, 38)	0.0
+SL(27, 77)	0.0
+SL(27, 76)	0.0
+SL(56, 24)	0.8317082981290441
+SL(28, 9)	0.8495955573815707
+SL(27, 79)	0.0
+SL(56, 23)	0.97923656485053
+SL(27, 78)	0.0
+SL(35, 63)	0.0
+SL(39, 17)	0.8387369353195085
+SL(55, 35)	0.0
+SL(46, 81)	0.0
+SL(35, 69)	0.0
+SL(47, 61)	0.0
+SL(29, 82)	0.0
+SL(55, 27)	0.0
+SL(39, 20)	0.0
+SL(10, 22)	0.0
+SL(56, 17)	0.09180160798330239
+SL(39, 24)	0.6349545250632207
+SL(55, 21)	0.0
+SL(55, 24)	0.0
+SL(35, 55)	0.0
+SL(54, 30)	0.0
+SL(46, 66)	0.0
+SL(33, 81)	6.645287672711667E-4
+SL(33, 80)	0.9996935642882495
+SL(38, 24)	0.6899850155940062
+SL(52, 56)	0.0
+SL(38, 23)	0.0
+SL(38, 28)	0.0
+SL(34, 75)	0.0
+SL(74, 5)	0.0
+SL(44, 42)	0.0
+SL(44, 41)	0.0
+SL(53, 33)	0.0017978071074928202
+SL(44, 45)	0.0
+SL(55, 14)	0.0
+SL(54, 27)	0.0
+SL(54, 24)	0.0
+SL(45, 24)	0.0
+SL(45, 22)	0.0
+SL(51, 58)	0.0
+SL(53, 24)	0.5840603452191064
+SL(53, 27)	1.0
+SL(85, 1)	0.0
+SL(50, 62)	0.8185704145697639
+SL(40, 78)	0.0
+SL(7, 2)	0.0
+SL(7, 5)	0.0
+SL(76, 6)	0.0
+SL(52, 26)	0.0
+SL(52, 25)	0.0
+SL(44, 63)	0.0
+SL(43, 79)	0.0
+SL(82, 5)	0.002978288629898235
+SL(5, 7)	0.0
+SL(53, 18)	0.0
+SL(48, 10)	0.0
+SL(47, 24)	0.0
+SL(42, 83)	0.0
+SL(88, 71)	0.0
+SL(7, 72)	0.0
+SL(52, 20)	0.0
+SL(52, 24)	0.5625633024721388
+SL(45, 44)	0.0
+SL(44, 56)	0.0
+SL(26, 7)	0.0
+SL(46, 24)	0.0
+SL(88, 81)	3.399826010377962E-4
+SL(88, 82)	0.003698122295904132
+SL(39, 59)	0.0
+SL(41, 86)	0.0
+SL(47, 11)	0.0
+SL(46, 20)	0.0
+SL(51, 22)	0.0
+SL(51, 23)	0.0
+SL(46, 22)	0.0
+SL(51, 24)	0.0
+SL(37, 79)	0.0
+SL(41, 82)	0.0
+SL(51, 26)	0.0
+SL(51, 29)	0.0
