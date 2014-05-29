@@ -198,15 +198,21 @@ def printEL(fh, edges, map, edge_universe, consider=None, symmetric=True):
 
 	fh.close()	
 
-def randomNegEdgeSafe(g):
+def randomNegEdgeSafe(g, exclude):
 
 	A = None
 	B = None
+	edge = None
 	while True:
 		try:
-			return randomNegEdge(g)
+			edge = randomNegEdge(g)
+			if edge in exclude or (edge[1],edge[0]) in exclude:
+				continue
+			else:
+				break
 		except:
 			continue
+
 
 def randomNegEdge(g):
 
@@ -278,8 +284,11 @@ def split(edges, g):
 
 	# assigning priors to each
 	print "selecting random negative training cases..."
+	# store a list so we don't duplicate negative cases
+	neg_training_cases = set()
 	for i in range(0, len(edge_l)):
-		neg_edge = randomNegEdgeSafe(g)
+		neg_edge = randomNegEdgeSafe(g, neg_training_cases)
+		neg_training_cases.add( neg_edge )
 		if i in fold1:
 			folds[1][neg_edge] = 0.01
 		elif i in fold2:
