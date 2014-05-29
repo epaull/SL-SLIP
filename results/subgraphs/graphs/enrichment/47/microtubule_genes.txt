@@ -1,0 +1,26 @@
+ID	Gene Name	Species
+3122590	APC/C activator protein CDC20	Saccharomyces cerevisiae	
+3123193	Actin	Saccharomyces cerevisiae	
+3126687	Anaphase spindle elongation protein	Saccharomyces cerevisiae	
+3127422	Calmodulin	Saccharomyces cerevisiae	
+3126910	Centractin	Saccharomyces cerevisiae	
+3125659	Coronin-like protein	Saccharomyces cerevisiae	
+3124845	DASH complex subunit DUO1	Saccharomyces cerevisiae	
+3124490	Forkhead transcription factor HCM1	Saccharomyces cerevisiae	
+3123604	GTP-binding protein CIN4	Saccharomyces cerevisiae	
+3125101	GTPase-activating protein BEM2/IPL2	Saccharomyces cerevisiae	
+3126485	Karyogamy protein KAR9	Saccharomyces cerevisiae	
+3128740	Kinesin-like protein CIN8	Saccharomyces cerevisiae	
+3129316	Kinesin-like protein KAR3	Saccharomyces cerevisiae	
+3129384	Kinesin-like protein KIP1	Saccharomyces cerevisiae	
+3127858	Kinesin-like protein KIP3	Saccharomyces cerevisiae	
+3127789	Myosin-2	Saccharomyces cerevisiae	
+3123097	Protein BIM1	Saccharomyces cerevisiae	
+3125998	Protein BNI1	Saccharomyces cerevisiae	
+3128056	Protein NUF1	Saccharomyces cerevisiae	
+3126017	Protein STU1	Saccharomyces cerevisiae	
+3128939	Protein STU2	Saccharomyces cerevisiae	
+3127307	Spindle pole body-associated protein CIK1	Saccharomyces cerevisiae	
+3126464	Tubulin alpha-3 chain	Saccharomyces cerevisiae	
+3126809	Tubulin beta chain	Saccharomyces cerevisiae	
+3124057	Tubulin-specific chaperone C	Saccharomyces cerevisiae	
