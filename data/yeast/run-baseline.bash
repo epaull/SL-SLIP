@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for fold in {50..51}; do
+for fold in 13; do
 
 	sh chooseFold.SUBGRAPHS.sh $fold
 	pushd ../../develop/sl-slip
